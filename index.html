@@ -723,8 +723,55 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   color: var(--text);
   font-weight: 500;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
   line-height: 1.3;
 }
+.evt-recurring {
+  font-size: 9px;
+  color: var(--text-3);
+  font-style: italic;
+  font-family: 'Fraunces', serif;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+/* Farb-Picker im Termin-Formular */
+.evt-color-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.evt-color-pick {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: transform 0.15s ease;
+  position: relative;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  font-family: 'Fraunces', serif;
+}
+.evt-color-pick::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--text);
+  opacity: 0;
+}
+.evt-color-pick:hover { transform: scale(1.1); }
+.evt-color-pick.active::after { opacity: 1; }
+.evt-color-auto { font-style: italic; }
 .day-add {
   margin-top: auto;
   padding-top: 8px;
@@ -952,15 +999,16 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
       </div>
 
       <div class="quick-tags" id="quickTags">
-        <button class="qt" data-tag="💪 Training">💪 Training</button>
-        <button class="qt" data-tag="👥 Meeting">👥 Meeting</button>
-        <button class="qt" data-tag="💇 Haare waschen">💇 Haare waschen</button>
-        <button class="qt" data-tag="🧹 Putztag">🧹 Putztag</button>
-        <button class="qt" data-tag="🛒 Einkaufen">🛒 Einkaufen</button>
-        <button class="qt" data-tag="📚 Lernen">📚 Lernen</button>
-        <button class="qt" data-tag="💉 Botox">💉 Botox</button>
-        <button class="qt" data-tag="❤️ Date">❤️ Date</button>
-        <button class="qt" data-tag="📞 Call">📞 Call</button>
+        <button class="qt" data-tag="💪 Training" data-color="peach">💪 Training</button>
+        <button class="qt" data-tag="👥 Meeting" data-color="violet">👥 Meeting</button>
+        <button class="qt" data-tag="💇 Haare waschen" data-color="rosa">💇 Haare waschen</button>
+        <button class="qt" data-tag="🧹 Putztag" data-color="minze">🧹 Putztag</button>
+        <button class="qt" data-tag="🛒 Einkaufen" data-color="buttermilk">🛒 Einkaufen</button>
+        <button class="qt" data-tag="📚 Lernen" data-color="violet">📚 Lernen</button>
+        <button class="qt" data-tag="💉 Botox" data-color="rosa">💉 Botox</button>
+        <button class="qt" data-tag="❤️ Date" data-color="rosa">❤️ Date</button>
+        <button class="qt" data-tag="📞 Call" data-color="violet">📞 Call</button>
+        <button class="qt" data-tag="🎉 Feiertag" data-color="buttermilk">🎉 Feiertag</button>
       </div>
 
       <div class="form-grid">
@@ -975,6 +1023,30 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
         <div class="field-stack">
           <label class="field-label">Uhrzeit (optional)</label>
           <input type="time" id="evtTime" />
+        </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-top: 16px;">
+        <div class="field-stack">
+          <label class="field-label">Farbe (optional)</label>
+          <div class="evt-color-row" id="evtColorPicker">
+            <button class="evt-color-pick" data-color="" title="Auto (Tag-Farbe)">
+              <span class="evt-color-auto">A</span>
+            </button>
+            <button class="evt-color-pick" data-color="peach"      style="background: var(--peach);"      title="Peach"></button>
+            <button class="evt-color-pick" data-color="rosa"       style="background: var(--rosa);"       title="Rosa"></button>
+            <button class="evt-color-pick" data-color="minze"      style="background: var(--minze);"      title="Minze"></button>
+            <button class="evt-color-pick" data-color="buttermilk" style="background: var(--buttermilk);" title="Buttermilk"></button>
+            <button class="evt-color-pick" data-color="violet"     style="background: var(--violet);"     title="Violet"></button>
+          </div>
+        </div>
+        <div class="field-stack">
+          <label class="field-label">Wiederholung</label>
+          <select id="evtRecurrence">
+            <option value="none">Keine</option>
+            <option value="weekly">Wöchentlich</option>
+            <option value="monthly">Monatlich</option>
+          </select>
         </div>
       </div>
 
@@ -1424,44 +1496,101 @@ function renderExpensesTab() {
    TERMINE
 --------------------------------------------------------- */
 let selectedQuickTag = null;
+let selectedQuickTagColor = null;  // Default-Farbe vom angeklickten Tag
+let selectedManualColor = '';      // '' = Auto (Tag-Farbe), sonst überschreibt
 
 document.querySelectorAll('.qt').forEach(t => {
   t.addEventListener('click', () => {
     if (selectedQuickTag === t.dataset.tag) {
       selectedQuickTag = null;
+      selectedQuickTagColor = null;
       t.classList.remove('active');
       document.getElementById('evtText').value = '';
     } else {
       document.querySelectorAll('.qt').forEach(x => x.classList.remove('active'));
       selectedQuickTag = t.dataset.tag;
+      selectedQuickTagColor = t.dataset.color || 'minze';
       t.classList.add('active');
       document.getElementById('evtText').value = t.dataset.tag;
     }
   });
 });
 
+// Farb-Picker
+document.querySelectorAll('#evtColorPicker .evt-color-pick').forEach(b => {
+  b.addEventListener('click', () => {
+    selectedManualColor = b.dataset.color;
+    document.querySelectorAll('#evtColorPicker .evt-color-pick').forEach(x =>
+      x.classList.toggle('active', x.dataset.color === selectedManualColor)
+    );
+  });
+});
+// Default: "Auto" aktiv
+document.querySelector('#evtColorPicker .evt-color-pick[data-color=""]').classList.add('active');
+
 document.getElementById('addEventBtn').addEventListener('click', () => {
   const text = document.getElementById('evtText').value.trim();
   const date = document.getElementById('evtDate').value;
   const time = document.getElementById('evtTime').value;
+  const recurrence = document.getElementById('evtRecurrence').value;
 
   if (!text) { document.getElementById('evtText').focus(); return; }
   if (!date) { document.getElementById('evtDate').focus(); return; }
 
+  // Farbe entscheiden: manuelle Auswahl > Tag-Default > minze
+  let color = selectedManualColor || selectedQuickTagColor || 'minze';
+
   state.events.push({
     id: 'v' + Date.now(),
     text, date, time: time || null,
-    color: 'minze'
+    color,
+    recurrence: recurrence === 'none' ? null : recurrence
   });
   saveState();
 
   document.getElementById('evtText').value = '';
   document.getElementById('evtTime').value = '';
+  document.getElementById('evtRecurrence').value = 'none';
   selectedQuickTag = null;
+  selectedQuickTagColor = null;
+  selectedManualColor = '';
   document.querySelectorAll('.qt').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('#evtColorPicker .evt-color-pick').forEach(x =>
+    x.classList.toggle('active', x.dataset.color === '')
+  );
 
   renderWeeks();
 });
+
+// Prüft ob ein Termin an einem bestimmten ISO-Datum auftritt
+// Berücksichtigt Wiederholungen (weekly/monthly)
+function eventOccursOn(ev, isoDate) {
+  // Termin kann nicht vor seinem Startdatum auftreten
+  if (isoDate < ev.date) return false;
+  // Direkter Match
+  if (ev.date === isoDate) return true;
+  // Keine Wiederholung → nur am Startdatum
+  if (!ev.recurrence) return false;
+
+  const [sy, sm, sd] = ev.date.split('-').map(Number);
+  const [cy, cm, cd] = isoDate.split('-').map(Number);
+
+  if (ev.recurrence === 'weekly') {
+    // Differenz in Tagen, muss durch 7 teilbar sein
+    const start = new Date(sy, sm - 1, sd);
+    const cur = new Date(cy, cm - 1, cd);
+    const diffDays = Math.round((cur - start) / 86400000);
+    return diffDays > 0 && diffDays % 7 === 0;
+  }
+
+  if (ev.recurrence === 'monthly') {
+    // Selber Tag im Monat, aber späterer Monat
+    if (cd !== sd) return false;
+    return (cy > sy) || (cy === sy && cm > sm);
+  }
+
+  return false;
+}
 
 function renderWeeks() {
   const container = document.getElementById('weeksContainer');
@@ -1507,8 +1636,9 @@ function renderWeeks() {
       const isoDate = dateToLocalISO(dayDate);
       const isToday = dayDate.getTime() === today.getTime();
 
+      // Liefert alle Termin-Instanzen die an diesem Tag erscheinen sollen
       const events = state.events
-        .filter(e => e.date === isoDate)
+        .filter(e => eventOccursOn(e, isoDate))
         .sort((a, b) => (a.time || 'zz').localeCompare(b.time || 'zz'));
 
       const col = document.createElement('div');
@@ -1526,9 +1656,13 @@ function renderWeeks() {
         const chip = document.createElement('div');
         chip.className = 'evt';
         chip.style.setProperty('--evt-color', COLOR_VAR[ev.color] || COLOR_VAR.minze);
+        const recLabel = ev.recurrence === 'weekly' ? '↻ wöchentlich'
+                       : ev.recurrence === 'monthly' ? '↻ monatlich'
+                       : '';
         chip.innerHTML = `
           ${ev.time ? `<div class="evt-time">${ev.time}</div>` : ''}
           <div class="evt-text">${escapeHtml(ev.text)}</div>
+          ${recLabel ? `<div class="evt-recurring">${recLabel}</div>` : ''}
         `;
         chip.addEventListener('click', () => openEventModal(ev));
         stack.appendChild(chip);
@@ -1556,6 +1690,9 @@ function renderWeeks() {
 
 function openEventModal(ev) {
   document.getElementById('evtModalTitle').textContent = ev.text;
+  const recText = ev.recurrence === 'weekly' ? 'wöchentlich'
+                : ev.recurrence === 'monthly' ? 'monatlich'
+                : null;
   document.getElementById('evtModalBody').innerHTML = `
     <div class="modal-info-row">
       <span class="modal-info-label">Datum</span>
@@ -1566,9 +1703,16 @@ function openEventModal(ev) {
       <span class="modal-info-label">Uhrzeit</span>
       <span>${ev.time} Uhr</span>
     </div>` : ''}
+    ${recText ? `
+    <div class="modal-info-row">
+      <span class="modal-info-label">Wiederholt</span>
+      <span>${recText} ab ${formatDateShort(ev.date)}</span>
+    </div>` : ''}
   `;
   const delBtn = document.getElementById('evtModalDelete');
+  delBtn.textContent = recText ? 'Serie löschen' : 'Löschen';
   delBtn.onclick = () => {
+    if (recText && !confirm(`Wiederkehrenden Termin "${ev.text}" wirklich löschen?\nAlle Wiederholungen werden entfernt.`)) return;
     state.events = state.events.filter(e => e.id !== ev.id);
     saveState();
     closeEventModal();
