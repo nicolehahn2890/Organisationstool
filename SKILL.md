@@ -6,11 +6,12 @@ description: >
   Pages at nicolehahn2890.github.io/Organisationstool. Trigger on any mention of:
   "Organisationstool", "Tracker", "Ausgaben-Tracker", "Termin-Tracker",
   "Finanz-Tracker", "Kreditkarten-Tracker", "Amex/Visa/Girokonto Tracker",
-  "Buchungsdatum", "Abbuchung", "Drei Wochen-Übersicht",
-  "nicolehahn2890.github.io/Organisationstool", or any request to add/fix/style
-  features in this app. Also trigger when the user uploads an HTML file related
-  to the app or mentions the GitHub repo nicolehahn2890/Organisationstool.
-  Never skip this skill for Organisationstool work.
+  "Buchungsdatum", "Abbuchung", "Drei Wochen-Übersicht", "wiederkehrende Termine",
+  "Serie bearbeiten", "nicolehahn2890.github.io/Organisationstool", or any request
+  to add/fix/style features in this app. Also trigger when the user uploads an
+  HTML file related to the app or mentions the GitHub repo
+  nicolehahn2890/Organisationstool. Never skip this skill for Organisationstool
+  work.
 ---
 
 # Organisationstool — Claude Code Skill
@@ -23,7 +24,7 @@ description: >
 - **Deployment:** Direkt via GitHub Pages (push → live)
 - **Zweck:** Persönlicher Tracker für Nicole mit zwei Hauptbereichen:
   1. **Ausgaben** — Tracking von Kreditkarten-Ausgaben mit automatischer Buchungsdatum-Berechnung
-  2. **Termine** — 3-Wochen-Übersicht (diese + nächste + übernächste Woche)
+  2. **Termine** — 3-Wochen-Übersicht mit wiederkehrenden Terminen + einzelne Instanz-Bearbeitung
 
 ---
 
@@ -131,14 +132,70 @@ Plus: horizontales Balkendiagramm pro Kategorie (sortiert nach Höhe).
 
 ## Tab 2: Termine
 
-### Quick-Tags (9 feste Buttons)
-```
-💪 Training · 👥 Meeting · 💇 Haare waschen · 🧹 Putztag ·
-🛒 Einkaufen · 📚 Lernen · 💉 Botox · ❤️ Date · 📞 Call
+### Quick-Tags (10 feste Buttons mit Default-Farben)
+Jeder Tag hat eine fest zugeordnete `data-color` als Vorschlag:
+
+| Tag | Default-Farbe |
+|---|---|
+| 💪 Training | peach |
+| 👥 Meeting | violet |
+| 💇 Haare waschen | rosa |
+| 🧹 Putztag | minze |
+| 🛒 Einkaufen | buttermilk |
+| 📚 Lernen | violet |
+| 💉 Botox | rosa |
+| ❤️ Date | rosa |
+| 📞 Call | violet |
+| 🎉 Feiertag | buttermilk |
+
+Klick auf Tag füllt das Beschreibungs-Feld vor + setzt Default-Farbe. Erneuter Klick deaktiviert. Eigener Freitext bleibt natürlich auch möglich.
+
+### Farb-Picker (im Termin-Formular)
+6 Buttons im Formular:
+- "A" (Auto) — nimmt die Default-Farbe vom Quick-Tag (oder minze als Fallback)
+- 5 Farb-Punkte (peach/rosa/minze/buttermilk/violet) zum manuellen Überschreiben
+
+Logik: `selectedManualColor || selectedQuickTagColor || 'minze'`
+
+### Wiederholungen
+Dropdown im Formular: **Keine / Wöchentlich / Monatlich**
+
+Gespeichert als `event.recurrence: 'weekly' | 'monthly' | null`.
+
+Wiederkehrende Instanzen werden im Chip mit "↻ wöchentlich" / "↻ monatlich" markiert.
+
+### Override-System für einzelne Instanzen ⭐ KRITISCH
+Wiederkehrende Termine können pro Instanz überschrieben werden, ohne die Serie zu zerstören.
+
+Datenstruktur:
+```javascript
+{
+  id: 'v123',
+  text: 'Putztag',
+  date: '2026-04-28',
+  recurrence: 'weekly',
+  overrides: {
+    '2026-05-05': null,                                  // diese Instanz GELÖSCHT
+    '2026-05-12': { date: '2026-05-13', text: 'Großputz' }  // verschoben + umbenannt
+  }
+}
 ```
 
-Klick auf Tag füllt das Beschreibungs-Feld vor. Erneuter Klick deaktiviert.
-Eigener Freitext bleibt natürlich auch möglich.
+**Schlüssel-Funktionen:**
+- `eventOccursOn(ev, isoDate)` — prüft ob ein Termin an diesem Datum erscheinen soll. Berücksichtigt:
+  1. Lösch-Override (`overrides[isoDate] === null`) → false
+  2. Verschiebungs-Ziel (eine andere Instanz wurde auf dieses Datum verschoben) → true
+  3. Original-Datum (außer wenn auf anderes Datum verschoben)
+  4. Reguläre Recurrence-Logik (weekly/monthly)
+- `resolveEventForDate(ev, isoDate)` — liefert die effektiven Werte (Original mit angewandten Overrides) und setzt `occurrenceDate` + `sourceDate`
+
+**Im Modal: 4 Buttons bei wiederkehrenden Terminen:**
+- "Diesen löschen" → `overrides[sourceDate] = null`
+- "Serie löschen" → ganzes Event aus `state.events` entfernen
+- "Diesen bearbeiten" → öffnet Edit-Form, schreibt in `overrides[sourceDate] = { ... }`
+- "Serie bearbeiten" → ändert das Original-Event direkt
+
+**Bei Einzelterminen (recurrence: null):** nur "Löschen" + "Bearbeiten", beide wirken aufs Original.
 
 ### 3-Wochen-Übersicht
 Zeigt immer:
@@ -148,15 +205,19 @@ Zeigt immer:
 
 Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehoben.
 
-### Termin-Daten
+### Termin-Daten (Schema)
 - Beschreibung (Pflicht)
 - Datum (Pflicht)
 - Uhrzeit (optional)
-- Farbe ist immer minze (für Termine fest)
+- Farbe (peach/rosa/minze/buttermilk/violet — Default vom Quick-Tag)
+- Recurrence (null/weekly/monthly)
+- Overrides (optional, nur wenn einzelne Instanzen geändert wurden)
 
-### Termin-Detail-Modal
-- Klick auf Termin-Chip öffnet Modal mit Datum + Uhrzeit
-- Lösch-Button in rot
+### Termin-Chip Layout
+- Linke Border in der Termin-Farbe
+- Optional Uhrzeit (klein)
+- Beschreibung — **MUSS** umbrechen können (`white-space: normal`, `overflow-wrap: anywhere`) — KEIN `text-overflow: ellipsis` mit `nowrap` (kappt sonst lange Texte ab)
+- Optional Recurrence-Label
 
 ---
 
@@ -165,8 +226,14 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - **localStorage-Key:** `nicole_tracker_v2`
 - **NIEMALS** den Key ohne triftigen Grund ändern — würde Nutzerdaten löschen
 - Falls schemata-breaking: Key bewusst inkrementieren (`_v3` etc.) und Migrations-Logik in `loadState()` ergänzen
-- Persistiert wird: theme, selectedCardId, expenses, events, viewMonth
+- Persistiert wird: theme, selectedCardId, expenses, events (inkl. overrides), viewMonth
 - **NICHT** persistiert: cards-Array (ist hartkodiert), Buchungsdaten (werden berechnet)
+
+### Schema-Erweiterungen müssen abwärtskompatibel sein
+Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
+- Altes Schema muss weiter funktionieren
+- Defaults via `??` oder Existenz-Checks (`if (ev.overrides) { ... }`)
+- KEIN Zwang auf neues Feld
 
 ---
 
@@ -185,8 +252,7 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Kein `<form>`-Tag — immer Button mit `onclick` oder `addEventListener`
 
 ### String-Replacement in Claude Code
-- Bei Änderungen: **Python-Script** zum Lesen → Modifizieren → Einmal Schreiben
-- **Nicht** mehrere `str_replace` hintereinander auf dieselbe Datei wenn nicht nötig
+- Bei Änderungen: gezielt mit `str_replace` für kleine Edits — oder Python read/modify/write für große Umbauten
 - Bei deutschen Umlauten: Unicode-Escape verwenden falls Probleme
   - ä = `\u00e4`, ö = `\u00f6`, ü = `\u00fc`, Ä = `\u00c4` usw.
 
@@ -195,11 +261,17 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Daher: NIEMALS Funktionsnamen als Element-ID verwenden
 - Konkret: Buttons heißen `btnPrevMonth`/`btnNextMonth`, Funktionen heißen `prevMonth()`/`nextMonth()`
 
+### Modal mit dynamischen Buttons
+- Modal-Actions werden je nach Kontext (Single/Recurring/View/Edit) **komplett neu gerendert**
+- `flex-wrap: wrap` und `row-gap` sind erforderlich, da bei Recurring 4 Buttons nebeneinander zu breit werden
+- `modalContext` als globaler State: `{ event, occurrenceDate, sourceDate, resolved, mode, scope }`
+
 ### KRITISCHE VERBOTE
 - `°` Zeichen nicht verwenden → JavaScript-Fehler möglich, "Grad" schreiben
 - localStorage-Key (`nicole_tracker_v2`) nicht ändern → Datenverlust
 - Keine Karten hinzufügen/entfernen — die 3 sind fix
 - Keine globale Akzent-Auswahl (Toggle) hinzufügen — Bereiche haben FESTE Farben
+- Termin-Chips dürfen NICHT mit `nowrap`+`ellipsis` arbeiten — Text muss vollständig sichtbar sein
 
 ---
 
@@ -215,6 +287,7 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
    - Keine Form-Tags
    - localStorage-Key unverändert
    - Theme-Attribut auf `<html>` UND `<body>`
+   - Schema-Erweiterungen abwärtskompatibel
 6. **Bereitstellen:** Datei nach `/mnt/user-data/outputs/index.html` kopieren und via `present_files` an Nicole geben
 7. **Deployment:** Nicole lädt die Datei selbst via GitHub Web-Interface ins Repo (Drag & Drop in "Add file → Upload files")
 
@@ -228,20 +301,33 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Surface-Farbe im Dark Mode muss **deutlich heller** als BG sein (`#252220` vs. `#1A1816`) — sonst keine Hierarchie.
 - Vorschau-Cache: Bei Tests immer Hard-Reload (Strg+F5) — sonst zeigt der Browser veraltete Versionen.
 - Wenn Karte 0,00 € zeigt obwohl Buchungen drin sind: Pending-Hinweis prüfen — Käufe könnten erst im Folgemonat abgebucht werden (richtige Logik, missverständliche Anzeige verhindert das).
+- Termin-Texte werden abgeschnitten → IMMER `white-space: normal` + `overflow-wrap: anywhere` für `.evt-text`
+- Bei Override-Logik: `overrides[sourceDate] === null` ist NICHT dasselbe wie `!overrides[sourceDate]` — explizit auf null prüfen, sonst werden gelöschte und nicht-existente Instanzen verwechselt
 
 ---
 
 ## Aktuelle Feature-Liste (Stand: April 2026)
 
+### Ausgaben
 ✅ 3 feste Karten: Amex, Visa, Girokonto
-✅ Automatische Buchungsdatum-Berechnung pro Karten-Typ
+✅ Automatische Buchungsdatum-Berechnung pro Karten-Typ (Giro=sofort, Amex=22./Folgemonat, Visa=+30 Tage)
 ✅ Pending-Hinweis "+ X € folgt im nächsten Monat" auf Karten
-✅ Light + Dark Mode (durchgängig, nicht nur Kacheln)
 ✅ 11 Kategorien inkl. 🎁 Geschenke
 ✅ Wiederkehrende Ausgaben (Abos) mit automatischer Projektion
 ✅ Statistik mit "Ausgegeben" + "Abbuchung gesamt" parallel
 ✅ Kategorien-Balkendiagramm
 ✅ Monatsnavigation (timezone-safe)
-✅ 3-Wochen-Termin-Übersicht
-✅ 9 Quick-Tags inkl. 💉 Botox und ❤️ Date
+
+### Termine
+✅ 10 Quick-Tags mit Default-Farben (inkl. 💉 Botox, ❤️ Date, 🎉 Feiertag)
+✅ Farb-Picker im Formular (Auto + 5 Farben, manuell überschreibbar)
+✅ Wiederholungen: keine / wöchentlich / monatlich
+✅ Override-System: einzelne Serien-Instanzen löschen/verschieben/umbenennen ohne Serie zu zerstören
+✅ Modal mit 4 Aktionen bei Recurring (Diesen/Serie × Löschen/Bearbeiten)
+✅ 3-Wochen-Übersicht (timezone-safe)
+✅ Termin-Texte brechen um (kein Abschneiden)
+
+### Allgemein
+✅ Light + Dark Mode (durchgängig, nicht nur Kacheln)
 ✅ localStorage-Persistenz unter `nicole_tracker_v2`
+✅ Editorial-Modern Design mit Fraunces + Inter
