@@ -829,6 +829,8 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   align-items: center;
   gap: 4px;
   margin-top: 28px;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 .modal-info {
   font-size: 14px;
@@ -1069,12 +1071,37 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 
 <div class="modal-bg" id="eventModal">
   <div class="modal zone-minze">
-    <h3 class="modal-title" id="evtModalTitle"></h3>
+    <h3 class="modal-title" id="evtModalTitle">Termin</h3>
     <div class="modal-info" id="evtModalBody"></div>
-    <div class="modal-actions">
-      <button class="btn btn-danger" id="evtModalDelete">Löschen</button>
-      <button class="btn btn-ghost" onclick="closeEventModal()">Schließen</button>
+
+    <div id="evtEditForm" style="display: none; margin-top: 20px;">
+      <div class="field-stack">
+        <label class="field-label">Beschreibung</label>
+        <input type="text" id="evtEditText" />
+      </div>
+      <div class="form-grid-2" style="margin-top: 8px;">
+        <div class="field-stack">
+          <label class="field-label">Datum</label>
+          <input type="date" id="evtEditDate" />
+        </div>
+        <div class="field-stack">
+          <label class="field-label">Uhrzeit (optional)</label>
+          <input type="time" id="evtEditTime" />
+        </div>
+      </div>
+      <div class="field-stack" style="margin-top: 16px;">
+        <label class="field-label">Farbe</label>
+        <div class="evt-color-row" id="evtEditColorPicker">
+          <button class="evt-color-pick" data-color="peach"      style="background: var(--peach);"      title="Peach"></button>
+          <button class="evt-color-pick" data-color="rosa"       style="background: var(--rosa);"       title="Rosa"></button>
+          <button class="evt-color-pick" data-color="minze"      style="background: var(--minze);"      title="Minze"></button>
+          <button class="evt-color-pick" data-color="buttermilk" style="background: var(--buttermilk);" title="Buttermilk"></button>
+          <button class="evt-color-pick" data-color="violet"     style="background: var(--violet);"     title="Violet"></button>
+        </div>
+      </div>
     </div>
+
+    <div class="modal-actions" id="evtModalActions"></div>
   </div>
 </div>
 
@@ -1563,33 +1590,78 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
 });
 
 // Prüft ob ein Termin an einem bestimmten ISO-Datum auftritt
-// Berücksichtigt Wiederholungen (weekly/monthly)
+// Berücksichtigt Wiederholungen (weekly/monthly) UND Overrides (einzelne gelöschte/verschobene Instanzen)
 function eventOccursOn(ev, isoDate) {
+  // 1. Wenn diese Instanz explizit gelöscht wurde → false
+  if (ev.overrides && ev.overrides[isoDate] === null) return false;
+
+  // 2. Wenn eine andere Instanz auf dieses Datum VERSCHOBEN wurde → true
+  if (ev.overrides) {
+    for (const [origDate, override] of Object.entries(ev.overrides)) {
+      if (override && override.date === isoDate) return true;
+    }
+  }
+
+  // 3. Reguläre Wiederholungs-Logik
   // Termin kann nicht vor seinem Startdatum auftreten
   if (isoDate < ev.date) return false;
-  // Direkter Match
-  if (ev.date === isoDate) return true;
+
+  // Direkter Match (am Original-Datum)
+  if (ev.date === isoDate) {
+    // Aber nur wenn nicht selbst verschoben
+    if (ev.overrides && ev.overrides[isoDate] && ev.overrides[isoDate].date && ev.overrides[isoDate].date !== isoDate) return false;
+    return true;
+  }
+
   // Keine Wiederholung → nur am Startdatum
   if (!ev.recurrence) return false;
 
   const [sy, sm, sd] = ev.date.split('-').map(Number);
   const [cy, cm, cd] = isoDate.split('-').map(Number);
 
+  let isRecurringMatch = false;
   if (ev.recurrence === 'weekly') {
-    // Differenz in Tagen, muss durch 7 teilbar sein
     const start = new Date(sy, sm - 1, sd);
     const cur = new Date(cy, cm - 1, cd);
     const diffDays = Math.round((cur - start) / 86400000);
-    return diffDays > 0 && diffDays % 7 === 0;
+    isRecurringMatch = diffDays > 0 && diffDays % 7 === 0;
   }
-
   if (ev.recurrence === 'monthly') {
-    // Selber Tag im Monat, aber späterer Monat
-    if (cd !== sd) return false;
-    return (cy > sy) || (cy === sy && cm > sm);
+    if (cd === sd && ((cy > sy) || (cy === sy && cm > sm))) isRecurringMatch = true;
   }
 
-  return false;
+  if (!isRecurringMatch) return false;
+
+  // Match aus Recurrence — aber wenn diese Instanz auf ein anderes Datum verschoben wurde, hier nicht zeigen
+  if (ev.overrides && ev.overrides[isoDate] && ev.overrides[isoDate].date && ev.overrides[isoDate].date !== isoDate) return false;
+
+  return true;
+}
+
+// Liefert für ein Datum die "effektiven" Termin-Werte (mit Override-Anwendung)
+function resolveEventForDate(ev, isoDate) {
+  // Standard-Werte aus dem Original-Termin
+  let resolved = {
+    ...ev,
+    occurrenceDate: isoDate,    // an welchem Tag erscheint die Instanz
+    sourceDate: isoDate          // welcher Override-Key gilt
+  };
+
+  // Falls eine andere Instanz auf dieses Datum verschoben wurde → diese Werte nehmen
+  if (ev.overrides) {
+    for (const [origDate, override] of Object.entries(ev.overrides)) {
+      if (override && override.date === isoDate) {
+        resolved = { ...resolved, ...override, sourceDate: origDate };
+        return resolved;
+      }
+    }
+    // Override für genau dieses Datum (geändert ohne Verschiebung)
+    if (ev.overrides[isoDate] && ev.overrides[isoDate] !== null) {
+      resolved = { ...resolved, ...ev.overrides[isoDate], sourceDate: isoDate };
+    }
+  }
+
+  return resolved;
 }
 
 function renderWeeks() {
@@ -1637,8 +1709,10 @@ function renderWeeks() {
       const isToday = dayDate.getTime() === today.getTime();
 
       // Liefert alle Termin-Instanzen die an diesem Tag erscheinen sollen
+      // Für jede Instanz die effektiven Werte (Override-aware) berechnen
       const events = state.events
         .filter(e => eventOccursOn(e, isoDate))
+        .map(e => resolveEventForDate(e, isoDate))
         .sort((a, b) => (a.time || 'zz').localeCompare(b.time || 'zz'));
 
       const col = document.createElement('div');
@@ -1688,40 +1762,178 @@ function renderWeeks() {
   }
 }
 
-function openEventModal(ev) {
-  document.getElementById('evtModalTitle').textContent = ev.text;
-  const recText = ev.recurrence === 'weekly' ? 'wöchentlich'
-                : ev.recurrence === 'monthly' ? 'monatlich'
-                : null;
-  document.getElementById('evtModalBody').innerHTML = `
-    <div class="modal-info-row">
-      <span class="modal-info-label">Datum</span>
-      <span>${formatDateLong(ev.date)}</span>
-    </div>
-    ${ev.time ? `
-    <div class="modal-info-row">
-      <span class="modal-info-label">Uhrzeit</span>
-      <span>${ev.time} Uhr</span>
-    </div>` : ''}
-    ${recText ? `
-    <div class="modal-info-row">
-      <span class="modal-info-label">Wiederholt</span>
-      <span>${recText} ab ${formatDateShort(ev.date)}</span>
-    </div>` : ''}
-  `;
-  const delBtn = document.getElementById('evtModalDelete');
-  delBtn.textContent = recText ? 'Serie löschen' : 'Löschen';
-  delBtn.onclick = () => {
-    if (recText && !confirm(`Wiederkehrenden Termin "${ev.text}" wirklich löschen?\nAlle Wiederholungen werden entfernt.`)) return;
-    state.events = state.events.filter(e => e.id !== ev.id);
-    saveState();
-    closeEventModal();
-    renderWeeks();
+// === Termin-Modal: Anzeigen / Bearbeiten / Löschen — mit Override-Support ===
+let modalContext = null; // { event, occurrenceDate, mode: 'view'|'edit', scope: 'single'|'series' }
+
+function openEventModal(resolvedEv) {
+  // Original-Event aus state finden (resolvedEv kann Override-Werte enthalten)
+  const original = state.events.find(e => e.id === resolvedEv.id);
+  if (!original) return;
+
+  modalContext = {
+    event: original,
+    occurrenceDate: resolvedEv.occurrenceDate,
+    sourceDate: resolvedEv.sourceDate,
+    resolved: resolvedEv,
+    mode: 'view',
+    scope: null
   };
+  renderEventModal();
   document.getElementById('eventModal').classList.add('open');
 }
+
+function renderEventModal() {
+  const ctx = modalContext;
+  if (!ctx) return;
+  const isRecurring = !!ctx.event.recurrence;
+  const recText = ctx.event.recurrence === 'weekly' ? 'wöchentlich'
+                : ctx.event.recurrence === 'monthly' ? 'monatlich'
+                : null;
+
+  const title = document.getElementById('evtModalTitle');
+  const body = document.getElementById('evtModalBody');
+  const editForm = document.getElementById('evtEditForm');
+  const actions = document.getElementById('evtModalActions');
+
+  if (ctx.mode === 'view') {
+    title.textContent = ctx.resolved.text;
+    body.innerHTML = `
+      <div class="modal-info-row">
+        <span class="modal-info-label">Datum</span>
+        <span>${formatDateLong(ctx.occurrenceDate)}</span>
+      </div>
+      ${ctx.resolved.time ? `
+      <div class="modal-info-row">
+        <span class="modal-info-label">Uhrzeit</span>
+        <span>${ctx.resolved.time} Uhr</span>
+      </div>` : ''}
+      ${recText ? `
+      <div class="modal-info-row">
+        <span class="modal-info-label">Wiederholt</span>
+        <span>${recText} ab ${formatDateShort(ctx.event.date)}</span>
+      </div>` : ''}
+    `;
+    editForm.style.display = 'none';
+
+    if (isRecurring) {
+      actions.innerHTML = `
+        <button class="btn btn-danger" id="actDelSingle">Diesen löschen</button>
+        <button class="btn btn-danger" id="actDelSeries">Serie löschen</button>
+        <button class="btn btn-ghost" id="actEditSingle">Diesen bearbeiten</button>
+        <button class="btn btn-primary" id="actEditSeries">Serie bearbeiten</button>
+      `;
+      document.getElementById('actDelSingle').onclick = () => deleteOccurrence();
+      document.getElementById('actDelSeries').onclick = () => deleteSeries();
+      document.getElementById('actEditSingle').onclick = () => switchToEdit('single');
+      document.getElementById('actEditSeries').onclick = () => switchToEdit('series');
+    } else {
+      actions.innerHTML = `
+        <button class="btn btn-danger" id="actDelSingle">Löschen</button>
+        <button class="btn btn-ghost" onclick="closeEventModal()">Schließen</button>
+        <button class="btn btn-primary" id="actEditSingle">Bearbeiten</button>
+      `;
+      document.getElementById('actDelSingle').onclick = () => deleteSeries(); // bei Single = ganz löschen
+      document.getElementById('actEditSingle').onclick = () => switchToEdit('series'); // bei Single = direkt am Original
+    }
+  } else if (ctx.mode === 'edit') {
+    const scopeLabel = ctx.scope === 'single' ? 'Diesen Termin bearbeiten' : 'Serie bearbeiten';
+    title.textContent = scopeLabel;
+    body.innerHTML = ctx.scope === 'single'
+      ? `<div style="font-size: 13px; color: var(--text-2); font-style: italic; font-family: 'Fraunces', serif;">Änderungen gelten nur für ${formatDateLong(ctx.occurrenceDate)}.</div>`
+      : (isRecurring ? `<div style="font-size: 13px; color: var(--text-2); font-style: italic; font-family: 'Fraunces', serif;">Änderungen gelten für die gesamte Serie.</div>` : '');
+
+    editForm.style.display = 'block';
+
+    // Felder mit aktuellen aufgelösten Werten füllen
+    document.getElementById('evtEditText').value = ctx.resolved.text;
+    document.getElementById('evtEditDate').value = ctx.scope === 'single' ? ctx.occurrenceDate : ctx.event.date;
+    document.getElementById('evtEditTime').value = ctx.resolved.time || '';
+    const curColor = ctx.resolved.color || 'minze';
+    document.querySelectorAll('#evtEditColorPicker .evt-color-pick').forEach(b => {
+      b.classList.toggle('active', b.dataset.color === curColor);
+    });
+
+    actions.innerHTML = `
+      <button class="btn btn-ghost" id="actCancel">Abbrechen</button>
+      <button class="btn btn-primary" id="actSave">Speichern</button>
+    `;
+    document.getElementById('actCancel').onclick = () => { ctx.mode = 'view'; renderEventModal(); };
+    document.getElementById('actSave').onclick = () => saveEdit();
+  }
+}
+
+// Farb-Picker im Edit-Modal
+document.querySelectorAll('#evtEditColorPicker .evt-color-pick').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#evtEditColorPicker .evt-color-pick').forEach(x =>
+      x.classList.toggle('active', x === b)
+    );
+  });
+});
+
+function switchToEdit(scope) {
+  modalContext.mode = 'edit';
+  modalContext.scope = scope;
+  renderEventModal();
+}
+
+function saveEdit() {
+  const ctx = modalContext;
+  const newText = document.getElementById('evtEditText').value.trim();
+  const newDate = document.getElementById('evtEditDate').value;
+  const newTime = document.getElementById('evtEditTime').value || null;
+  const activeColorBtn = document.querySelector('#evtEditColorPicker .evt-color-pick.active');
+  const newColor = activeColorBtn ? activeColorBtn.dataset.color : (ctx.resolved.color || 'minze');
+
+  if (!newText) { document.getElementById('evtEditText').focus(); return; }
+  if (!newDate) { document.getElementById('evtEditDate').focus(); return; }
+
+  if (ctx.scope === 'series' || !ctx.event.recurrence) {
+    // Ganze Serie / Einzeltermin: Original ändern
+    ctx.event.text = newText;
+    ctx.event.date = newDate;
+    ctx.event.time = newTime;
+    ctx.event.color = newColor;
+  } else {
+    // Nur diese Instanz: Override anlegen
+    if (!ctx.event.overrides) ctx.event.overrides = {};
+    ctx.event.overrides[ctx.sourceDate] = {
+      text: newText,
+      date: newDate,
+      time: newTime,
+      color: newColor
+    };
+  }
+
+  saveState();
+  closeEventModal();
+  renderWeeks();
+}
+
+function deleteOccurrence() {
+  const ctx = modalContext;
+  if (!confirm(`Nur diesen Termin am ${formatDateLong(ctx.occurrenceDate)} löschen?\nDie Serie bleibt erhalten.`)) return;
+  if (!ctx.event.overrides) ctx.event.overrides = {};
+  ctx.event.overrides[ctx.sourceDate] = null; // null = gelöscht
+  saveState();
+  closeEventModal();
+  renderWeeks();
+}
+
+function deleteSeries() {
+  const ctx = modalContext;
+  const isRec = !!ctx.event.recurrence;
+  if (isRec && !confirm(`Wiederkehrenden Termin "${ctx.event.text}" wirklich löschen?\nAlle Wiederholungen werden entfernt.`)) return;
+  if (!isRec && !confirm('Diesen Termin wirklich löschen?')) return;
+  state.events = state.events.filter(e => e.id !== ctx.event.id);
+  saveState();
+  closeEventModal();
+  renderWeeks();
+}
+
 function closeEventModal() {
   document.getElementById('eventModal').classList.remove('open');
+  modalContext = null;
 }
 document.getElementById('eventModal').addEventListener('click', (e) => {
   if (e.target.id === 'eventModal') closeEventModal();
