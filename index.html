@@ -425,7 +425,7 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
@@ -527,12 +527,12 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .exp-meta {
   font-size: 12px;
@@ -549,6 +549,13 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   font-family: 'Fraunces', serif;
   font-size: 12px;
 }
+.eigen-hint {
+  font-style: italic;
+  color: var(--minze);
+  font-family: 'Fraunces', serif;
+  font-size: 12px;
+}
+[data-theme="dark"] .eigen-hint { color: var(--minze); }
 .cc-pill {
   display: inline-flex;
   align-items: center;
@@ -868,12 +875,19 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   .form-grid { grid-template-columns: 1fr; row-gap: 0; }
   .form-grid-2 { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .stats-row .stat:last-child { grid-column: span 2; }
   .day-grid { grid-template-columns: repeat(2, 1fr); }
   .bar-row { grid-template-columns: 110px 1fr 70px; gap: 10px; font-size: 12px; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 16px; }
   .section-title { font-size: 22px; }
   .section-head { flex-direction: column; align-items: flex-start; }
   .cards-row { grid-template-columns: 1fr; }
+  .stat { padding: 16px 18px; }
+  .stat-value { font-size: 22px; }
+}
+@media (min-width: 881px) and (max-width: 1100px) {
+  .stat { padding: 16px 18px; }
+  .stat-value { font-size: 22px; }
 }
 
 @keyframes fadeUp {
@@ -961,6 +975,14 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
           <label class="field-label">Datum</label>
           <input type="date" id="expDate" />
         </div>
+      </div>
+
+      <div class="form-grid-2" style="margin-top: 8px;">
+        <div class="field-stack">
+          <label class="field-label">Mein Anteil (€) — optional</label>
+          <input type="number" id="expEigen" placeholder="z.B. 30,00 wenn geteilt" step="0.01" />
+        </div>
+        <div class="field-stack"></div>
       </div>
 
       <div class="form-actions">
@@ -1347,18 +1369,25 @@ document.getElementById('addExpenseBtn').addEventListener('click', () => {
   const cardId = document.getElementById('expCard').value;
   const date = document.getElementById('expDate').value || todayISO();
   const recurring = document.getElementById('expRecurring').checked;
+  const eigenRaw = document.getElementById('expEigen').value;
+  const eigenAmount = eigenRaw === '' ? null : parseFloat(eigenRaw);
 
   if (!desc) { document.getElementById('expDesc').focus(); return; }
   if (isNaN(amount) || amount <= 0) { document.getElementById('expAmount').focus(); return; }
+  if (eigenAmount !== null && (isNaN(eigenAmount) || eigenAmount < 0)) {
+    document.getElementById('expEigen').focus(); return;
+  }
 
   state.expenses.push({
     id: 'e' + Date.now(),
-    desc, category: cat, amount, cardId, date, recurring
+    desc, category: cat, amount, cardId, date, recurring,
+    eigenAmount: (eigenAmount && eigenAmount > 0) ? eigenAmount : null
   });
   saveState();
 
   document.getElementById('expDesc').value = '';
   document.getElementById('expAmount').value = '';
+  document.getElementById('expEigen').value = '';
   document.getElementById('expRecurring').checked = false;
 
   renderExpensesTab();
@@ -1402,6 +1431,10 @@ function renderExpenseList() {
       ? '' // Girokonto: keine extra Info nötig
       : `<span class="booking-hint">→ abgebucht ${formatDateShort(bookingDate)}</span>`;
 
+    const eigenHint = (e.eigenAmount && e.eigenAmount > 0)
+      ? `<span class="eigen-hint">davon mein: ${formatEUR(e.eigenAmount)}</span>`
+      : '';
+
     const item = document.createElement('div');
     item.className = 'exp-item';
     item.innerHTML = `
@@ -1416,6 +1449,7 @@ function renderExpenseList() {
             <span>·</span>
             <span>${formatDateShort(e.date)}</span>
             ${bookingHint}
+            ${eigenHint}
           </div>
         </div>
       </div>
@@ -1455,6 +1489,11 @@ function renderStats() {
 
   document.getElementById('statsMonthMeta').textContent = monthLabel(state.viewMonth);
 
+  // Eigener Anteil aus Ausgabe-Items aufsummieren (nur wenn Wert gesetzt)
+  const eigenTotal = expenseItems
+    .filter(e => e.eigenAmount && e.eigenAmount > 0)
+    .reduce((s, e) => s + e.eigenAmount, 0);
+
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat">
       <div class="stat-label">Ausgegeben</div>
@@ -1463,6 +1502,10 @@ function renderStats() {
     <div class="stat">
       <div class="stat-label">Abbuchung gesamt</div>
       <div class="stat-value">${formatEUR(bookingTotal)}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Mein Anteil</div>
+      <div class="stat-value">${formatEUR(eigenTotal)}</div>
     </div>
     <div class="stat">
       <div class="stat-label">vs. Vormonat</div>

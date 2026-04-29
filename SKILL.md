@@ -109,19 +109,37 @@ Funktion: `computeBookingDate(cardId, expenseDateISO)`
 - Werden mit Tag "ABO" in violet markiert
 - Beim Löschen einer projizierten Instanz wird die Original-Quelle gelöscht (`recurringSource`)
 
-### Statistik-Box (4 Stats nebeneinander)
+### Eigener Anteil pro Buchung (`eigenAmount`)
+- Optionales Feld "Mein Anteil (€) — optional" im Formular bei JEDER Kategorie
+- Anwendungsfall: Nicole geht für sich + ihren Freund einkaufen → trackt was davon ihr eigener Anteil ist
+- Gespeichert als `expense.eigenAmount: number | null`
+- **Hat NULL Einfluss** auf Karten-Summen, Buchungen, Abbuchungen — reine Info-Spalte
+- Wird in Summe als 3. Stat-Box "Mein Anteil" angezeigt
+- In der Liste pro Eintrag dezent als italic Hinweis: "davon mein: X €" in minze-Farbe (`.eigen-hint`)
+- Leeres Feld = `null` → kein Hinweis, zählt nicht zur Summe
+
+### Statistik-Box (5 Stats)
 1. **Ausgegeben** — Summe nach Ausgabedatum
 2. **Abbuchung gesamt** — Summe nach Buchungsdatum (was geht diesen Monat tatsächlich aufs Konto)
-3. **vs. Vormonat** — Prozent-Vergleich (rot wenn höher, grün wenn niedriger)
-4. **Buchungen** — Anzahl Einträge
+3. **Mein Anteil** — Summe der `eigenAmount`-Werte
+4. **vs. Vormonat** — Prozent-Vergleich (rot wenn höher, grün wenn niedriger)
+5. **Buchungen** — Anzahl Einträge
 
 Plus: horizontales Balkendiagramm pro Kategorie (sortiert nach Höhe).
+
+**Layout:** Auf Desktop 5 Spalten, auf Mobile 2 Spalten. Bei 2 Spalten + 5 Boxen entstehen 2+2+1 → letzte Box würde halb-leer aussehen. Fix:
+```css
+.stats-row .stat:last-child { grid-column: span 2; }
+```
+Letzte Box bekommt im Mobile-Layout volle Breite — kein "Loch" mehr. Bei Erweiterung auf andere Box-Anzahlen unbedingt prüfen!
 
 ### Buchungsliste
 - Sortiert nach Ausgabedatum (neueste zuerst)
 - Pro Eintrag: Emoji, Beschreibung, Karte (mit Farb-Pill), Kategorie, Datum
 - Bei Amex/Visa: italic "→ abgebucht TT.MM." als Zusatzhinweis
+- Bei eigenAmount > 0: italic "davon mein: X €" in minze
 - Hover zeigt Lösch-X
+- **Beschreibung MUSS umbrechen können** — `.exp-desc` darf NICHT `white-space: nowrap` + `text-overflow: ellipsis` haben (kappt sonst lange Texte). Stattdessen: `word-break: break-word; overflow-wrap: anywhere; flex-wrap: wrap`
 
 ### Monatsnavigation
 - Pfeile ‹ › neben Monatslabel im Karten-Section-Header
@@ -302,6 +320,8 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 - Vorschau-Cache: Bei Tests immer Hard-Reload (Strg+F5) — sonst zeigt der Browser veraltete Versionen.
 - Wenn Karte 0,00 € zeigt obwohl Buchungen drin sind: Pending-Hinweis prüfen — Käufe könnten erst im Folgemonat abgebucht werden (richtige Logik, missverständliche Anzeige verhindert das).
 - Termin-Texte werden abgeschnitten → IMMER `white-space: normal` + `overflow-wrap: anywhere` für `.evt-text`
+- **Buchungslisten-Texte werden abgeschnitten** → IMMER `word-break: break-word` + `overflow-wrap: anywhere` + `flex-wrap: wrap` für `.exp-desc`. Ellipsis ist hier nie erwünscht (anders als z.B. in Mail-Listen).
+- **Stats-Grid mit ungerader Box-Anzahl in Mobile-2-Spalten-Layout** → letzte Box wirkt halb-leer (zeigt grauen Border-Bereich). Fix: `.stats-row .stat:last-child { grid-column: span 2 }` im Mobile-Media-Query. Bei Box-Anzahl-Änderung neu prüfen.
 - Bei Override-Logik: `overrides[sourceDate] === null` ist NICHT dasselbe wie `!overrides[sourceDate]` — explizit auf null prüfen, sonst werden gelöschte und nicht-existente Instanzen verwechselt
 
 ---
@@ -314,9 +334,11 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 ✅ Pending-Hinweis "+ X € folgt im nächsten Monat" auf Karten
 ✅ 11 Kategorien inkl. 🎁 Geschenke
 ✅ Wiederkehrende Ausgaben (Abos) mit automatischer Projektion
-✅ Statistik mit "Ausgegeben" + "Abbuchung gesamt" parallel
+✅ Optionales `eigenAmount`-Feld pro Buchung (z.B. wenn für sich + Partner gekauft)
+✅ Statistik mit 5 Boxen: Ausgegeben + Abbuchung gesamt + Mein Anteil + vs. Vormonat + Buchungen
 ✅ Kategorien-Balkendiagramm
 ✅ Monatsnavigation (timezone-safe)
+✅ Buchungslisten-Texte brechen um (kein Abschneiden)
 
 ### Termine
 ✅ 10 Quick-Tags mit Default-Farben (inkl. 💉 Botox, ❤️ Date, 🎉 Feiertag)
