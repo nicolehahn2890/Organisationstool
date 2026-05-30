@@ -97,10 +97,10 @@ Funktion: `computeBookingDate(cardId, expenseDateISO)`
 - **Label:** "ABBUCHUNG [Monat] [Jahr]"
 - **Pending-Hinweis (italic):** "+ X € folgt im nächsten Monat" — wenn es Käufe aus diesem Monat gibt deren Buchungsdatum in einem späteren Monat liegt
 
-### Kategorien (11 Stück, mit Emojis)
+### Kategorien (12 Stück, mit Emojis)
 ```
 🍽️ Essen · 🚆 Transport · 🏠 Wohnen · 💪 Sport · 🎬 Freizeit ·
-👗 Shopping · 💊 Gesundheit · 🎁 Geschenke · 📱 Abos · ✈️ Reisen · 📦 Sonstiges
+👗 Shopping · 💊 Gesundheit · 💄 Kosmetik · 🎁 Geschenke · 📱 Abos · ✈️ Reisen · 📦 Sonstiges
 ```
 
 ### Wiederkehrende Ausgaben (Abos)
@@ -108,6 +108,12 @@ Funktion: `computeBookingDate(cardId, expenseDateISO)`
 - Werden automatisch in Folgemonate projiziert (`isProjected: true`)
 - Werden mit Tag "ABO" in violet markiert
 - Beim Löschen einer projizierten Instanz wird die Original-Quelle gelöscht (`recurringSource`)
+
+**WICHTIG — Projektion in `getMonthExpenses` ist mode-abhängig:**
+- `mode === 'expense'`: Projektion **nur in den aktuellen viewMonth** (Kandidat = `[viewMonth]`).
+- `mode === 'booking'`: Projektion **in Vormonat UND aktuellen viewMonth** (Kandidaten = `[prevMonth(viewMonth), viewMonth]`).
+
+Grund: Bei Amex (Käufe ab dem 22.) und Visa (+30 Tage) liegt das Buchungsdatum eines Abos aus dem Vormonat im aktuellen Monat. Ohne Vormonats-Projektion fehlen diese Abo-Buchungen in der Abbuchungs-Summe. Dedup pro `recurringSource`, damit nicht doppelt gezählt wird.
 
 ### Eigener Anteil pro Buchung (`eigenAmount`)
 - Optionales Feld "Mein Anteil (€) — optional" im Formular bei JEDER Kategorie
@@ -176,11 +182,28 @@ Klick auf Tag füllt das Beschreibungs-Feld vor + setzt Default-Farbe. Erneuter 
 Logik: `selectedManualColor || selectedQuickTagColor || 'minze'`
 
 ### Wiederholungen
-Dropdown im Formular: **Keine / Wöchentlich / Monatlich**
+Dropdown im Formular:
+- Keine
+- Täglich
+- Alle 2 Tage / Alle 3 Tage / Alle 5 Tage / Alle 10 Tage
+- Wöchentlich
+- Alle 2 Wochen / Alle 4 Wochen
+- Monatlich
 
-Gespeichert als `event.recurrence: 'weekly' | 'monthly' | null`.
+Gespeichert als `event.recurrence: string | null`. Erlaubte Werte:
+- `'daily'` (= alle 1 Tag)
+- `'weekly'` (= alle 7 Tage)
+- `'monthly'` (kalender-basiert, gleicher Tag im Folgemonat)
+- `'every-Nd'` (alle N Tage, z.B. `every-2d`, `every-5d`)
+- `'every-Nw'` (alle N Wochen, z.B. `every-2w`, `every-4w`)
 
-Wiederkehrende Instanzen werden im Chip mit "↻ wöchentlich" / "↻ monatlich" markiert.
+**Helper-Funktionen** (in `index.html` definiert, vor `eventOccursOn`):
+- `recurrenceIntervalDays(rec)` → liefert Intervall in Tagen für tagebasierte Wiederholungen (`daily`, `weekly`, `every-Nd`, `every-Nw`), `null` für `monthly` oder unbekannt.
+- `recurrenceLabel(rec)` → liefert lesbares Label (`"täglich"`, `"alle 5 Tage"`, `"alle 2 Wochen"`, ...).
+
+Wiederkehrende Instanzen werden im Chip mit `↻ ` + Label markiert (z.B. "↻ alle 2 Wochen"). Im Modal wird "Wiederholt: [Label] ab TT.MM." angezeigt.
+
+**Abwärtskompatibilität:** Alte gespeicherte Termine mit `recurrence: 'weekly'` oder `'monthly'` funktionieren unverändert. Beim Erweitern um neue Intervalle nur das Format `every-Nd` / `every-Nw` nutzen, dann ist kein Migration nötig.
 
 ### Override-System für einzelne Instanzen ⭐ KRITISCH
 Wiederkehrende Termine können pro Instanz überschrieben werden, ohne die Serie zu zerstören.
@@ -204,7 +227,9 @@ Datenstruktur:
   1. Lösch-Override (`overrides[isoDate] === null`) → false
   2. Verschiebungs-Ziel (eine andere Instanz wurde auf dieses Datum verschoben) → true
   3. Original-Datum (außer wenn auf anderes Datum verschoben)
-  4. Reguläre Recurrence-Logik (weekly/monthly)
+  4. Reguläre Recurrence-Logik:
+     - Tagebasiert (`daily`, `weekly`, `every-Nd`, `every-Nw`) → `diffDays % intervalDays === 0` via `recurrenceIntervalDays()`
+     - `monthly` → gleicher Tag (`cd === sd`) in einem späteren Monat
 - `resolveEventForDate(ev, isoDate)` — liefert die effektiven Werte (Original mit angewandten Overrides) und setzt `occurrenceDate` + `sourceDate`
 
 **Im Modal: 4 Buttons bei wiederkehrenden Terminen:**
@@ -252,6 +277,14 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 - Altes Schema muss weiter funktionieren
 - Defaults via `??` oder Existenz-Checks (`if (ev.overrides) { ... }`)
 - KEIN Zwang auf neues Feld
+
+### Datenexport/-import (JSON)
+Header oben rechts (neben Theme-Toggle) hat zwei Icon-Buttons:
+- **Export (⬇):** `exportData()` schreibt den kompletten state als JSON mit `_meta`-Block in eine Download-Datei `tracker-backup-YYYY-MM-DD.json`.
+- **Import (⬆):** öffnet versteckten `<input type="file">`, ruft `importData(file)` auf. Validiert `expenses`/`events` als Arrays, zeigt `confirm()` mit Anzahl-Zusammenfassung, ersetzt dann den state und ruft `saveState()` + `renderAll()`.
+- Karten-IDs werden beim Import wie in `loadState()` validiert (unbekannte → `'amex'`).
+
+Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://` ↔ GitHub Pages), regelmäßiges Backup. **Niemals entfernen** — ist die einzige Möglichkeit für Nicole, ihre Daten zu sichern.
 
 ---
 
@@ -306,8 +339,8 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
    - localStorage-Key unverändert
    - Theme-Attribut auf `<html>` UND `<body>`
    - Schema-Erweiterungen abwärtskompatibel
-6. **Bereitstellen:** Datei nach `/mnt/user-data/outputs/index.html` kopieren und via `present_files` an Nicole geben
-7. **Deployment:** Nicole lädt die Datei selbst via GitHub Web-Interface ins Repo (Drag & Drop in "Add file → Upload files")
+6. **Committen & Pushen:** Direkt auf `main` committen und pushen — GitHub Pages deployed automatisch innerhalb von 1–2 Minuten. Branch-Setup (`claude/...`) ist deaktiviert, Nicole arbeitet direkt auf `main`.
+7. **Hinweis an Nicole:** Browser-Cache auf Handy/Desktop kann veraltet sein — bei Tests Hard-Reload empfehlen.
 
 ---
 
@@ -326,14 +359,14 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 
 ---
 
-## Aktuelle Feature-Liste (Stand: April 2026)
+## Aktuelle Feature-Liste (Stand: Mai 2026)
 
 ### Ausgaben
 ✅ 3 feste Karten: Amex, Visa, Girokonto
 ✅ Automatische Buchungsdatum-Berechnung pro Karten-Typ (Giro=sofort, Amex=22./Folgemonat, Visa=+30 Tage)
 ✅ Pending-Hinweis "+ X € folgt im nächsten Monat" auf Karten
-✅ 11 Kategorien inkl. 🎁 Geschenke
-✅ Wiederkehrende Ausgaben (Abos) mit automatischer Projektion
+✅ 12 Kategorien inkl. 💄 Kosmetik und 🎁 Geschenke
+✅ Wiederkehrende Ausgaben (Abos) mit automatischer Projektion in Folge- UND Vormonat (für Buchungsansicht von Amex/Visa)
 ✅ Optionales `eigenAmount`-Feld pro Buchung (z.B. wenn für sich + Partner gekauft)
 ✅ Statistik mit 5 Boxen: Ausgegeben + Abbuchung gesamt + Mein Anteil + vs. Vormonat + Buchungen
 ✅ Kategorien-Balkendiagramm
@@ -343,7 +376,7 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 ### Termine
 ✅ 10 Quick-Tags mit Default-Farben (inkl. 💉 Botox, ❤️ Date, 🎉 Feiertag)
 ✅ Farb-Picker im Formular (Auto + 5 Farben, manuell überschreibbar)
-✅ Wiederholungen: keine / wöchentlich / monatlich
+✅ Wiederholungen: keine / täglich / alle 2/3/5/10 Tage / wöchentlich / alle 2/4 Wochen / monatlich (über `every-Nd` / `every-Nw`-Format, abwärtskompatibel)
 ✅ Override-System: einzelne Serien-Instanzen löschen/verschieben/umbenennen ohne Serie zu zerstören
 ✅ Modal mit 4 Aktionen bei Recurring (Diesen/Serie × Löschen/Bearbeiten)
 ✅ 3-Wochen-Übersicht (timezone-safe)
@@ -352,4 +385,5 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 ### Allgemein
 ✅ Light + Dark Mode (durchgängig, nicht nur Kacheln)
 ✅ localStorage-Persistenz unter `nicole_tracker_v2`
+✅ JSON-Export/-Import im Header (Backup + Migration zwischen Origins)
 ✅ Editorial-Modern Design mit Fraunces + Inter
