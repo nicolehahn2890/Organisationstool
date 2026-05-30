@@ -183,6 +183,7 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 }
 .theme-btn:hover { color: var(--text); border-color: var(--line-2); }
 .theme-btn svg { width: 16px; height: 16px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 
 .tabs {
   display: flex;
@@ -909,9 +910,22 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
       <span class="brand-mark">·</span>
       <span>tracker</span>
     </div>
-    <button class="theme-btn" id="themeToggle" title="Hell/Dunkel" aria-label="Theme wechseln">
-      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
-    </button>
+    <div class="header-actions">
+      <button class="theme-btn" id="btnExport" title="Daten als JSON exportieren" aria-label="Exportieren">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>
+        </svg>
+      </button>
+      <button class="theme-btn" id="btnImport" title="Daten aus JSON importieren" aria-label="Importieren">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M5 3h14"/>
+        </svg>
+      </button>
+      <input type="file" id="importFileInput" accept="application/json,.json" style="display:none" />
+      <button class="theme-btn" id="themeToggle" title="Hell/Dunkel" aria-label="Theme wechseln">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -1211,6 +1225,62 @@ function saveState() {
   } catch (e) { console.warn('save failed', e); }
 }
 
+function exportData() {
+  const payload = {
+    _meta: { app: 'nicole_tracker', version: 2, exportedAt: new Date().toISOString() },
+    theme: state.theme,
+    selectedCardId: state.selectedCardId,
+    expenses: state.expenses,
+    events: state.events,
+    viewMonth: state.viewMonth
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `tracker-backup-${ts}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const p = JSON.parse(ev.target.result);
+      const expenses = Array.isArray(p.expenses) ? p.expenses : null;
+      const events = Array.isArray(p.events) ? p.events : null;
+      if (!expenses && !events) {
+        alert('Datei enthält keine erkennbaren Daten.');
+        return;
+      }
+      const summary = `Import: ${expenses ? expenses.length : 0} Ausgaben, ${events ? events.length : 0} Termine.\n\nAchtung: alle aktuellen Daten werden ersetzt. Fortfahren?`;
+      if (!confirm(summary)) return;
+
+      if (expenses) state.expenses = expenses;
+      if (events) state.events = events;
+      if (p.theme) state.theme = p.theme;
+      if (p.selectedCardId) state.selectedCardId = p.selectedCardId;
+      if (p.viewMonth) state.viewMonth = p.viewMonth;
+
+      // Karten-IDs validieren (gleiche Logik wie loadState)
+      const validIds = new Set(CARDS.map(c => c.id));
+      state.expenses.forEach(e => { if (!validIds.has(e.cardId)) e.cardId = 'amex'; });
+      if (!validIds.has(state.selectedCardId)) state.selectedCardId = 'amex';
+
+      saveState();
+      renderAll();
+      alert('Import erfolgreich.');
+    } catch (err) {
+      alert('Import fehlgeschlagen: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
 const ICON_MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 const ICON_SUN  = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
 
@@ -1225,6 +1295,16 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   state.theme = state.theme === 'light' ? 'dark' : 'light';
   applyTheme();
   saveState();
+});
+
+document.getElementById('btnExport').addEventListener('click', exportData);
+document.getElementById('btnImport').addEventListener('click', () => {
+  document.getElementById('importFileInput').click();
+});
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) importData(file);
+  e.target.value = ''; // reset, damit dieselbe Datei nochmal gewählt werden kann
 });
 
 document.querySelectorAll('.tab').forEach(t => {
