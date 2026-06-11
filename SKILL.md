@@ -281,6 +281,11 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 
 - **localStorage-Key:** `nicole_tracker_v2`
 - **NIEMALS** den Key ohne triftigen Grund ändern — würde Nutzerdaten löschen
+- **Hintergrund (Juni 2026):** Nicole hat einmal alle Daten verloren, weil sie das
+  Home-Screen-Icon gelöscht hat (eigener Storage-Container, kein Backup vorhanden).
+  Die App startete danach bei Null. Deshalb: Backups (Export ⬇) bei jeder Gelegenheit
+  freundlich in Erinnerung rufen; eine automatische Backup-Erinnerung in der App wurde
+  angeboten, ist aber noch NICHT eingebaut — guter Kandidat für eine nächste Iteration.
 - Zusätzliche Hilfs-Keys (KEINE Nutzerdaten, dürfen gelöscht werden):
   - `nicole_tracker_version_hash` — Hash der zuletzt gesehenen App-Version (für Auto-Update)
   - sessionStorage `nicole_tracker_just_updated` — Flag für den "App aktualisiert"-Toast
@@ -448,3 +453,4 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ✅ Abo-Projektion klemmt Tag auf Monatsende (kein "31. Februar" mehr)
 ✅ Auto-Update beim Öffnen (löst das iOS-Home-Screen-Cache-Problem; Toast "App aktualisiert ✓")
 ✅ Design-Glow-up: getönte Termin-Chips & Quick-Tags, Karten mit Farbverlauf, `.stat-hero` für "Abbuchung gesamt", "— Heute"-Label
+✅ Home-Screen-Icon `apple-touch-icon.png` (Mini-Kalender mit bunten Termin-Punkten, hell)
