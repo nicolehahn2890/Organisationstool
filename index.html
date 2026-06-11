@@ -2355,10 +2355,66 @@ function renderAll() {
   renderExpensesTab();
 }
 
+/* ---------------------------------------------------------
+   AUTO-UPDATE — prüft beim Öffnen, ob auf GitHub Pages eine
+   neue Version liegt, und lädt die App dann einmal neu.
+   Nötig, weil iOS Home-Screen-Webapps den alten Stand
+   einfrieren und nie von selbst nachladen.
+   Nutzerdaten (nicole_tracker_v2) bleiben davon unberührt.
+--------------------------------------------------------- */
+const VERSION_HASH_KEY = 'nicole_tracker_version_hash';
+const JUST_UPDATED_KEY = 'nicole_tracker_just_updated';
+let lastUpdateCheck = 0;
+
+function hashText(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+  return String(h);
+}
+
+async function checkForUpdate() {
+  if (!location.protocol.startsWith('http')) return; // lokal geöffnete Datei: nichts tun
+  const now = Date.now();
+  if (now - lastUpdateCheck < 60000) return; // höchstens 1x pro Minute
+  lastUpdateCheck = now;
+  try {
+    const res = await fetch(location.href, { cache: 'no-store' });
+    if (!res.ok) return;
+    const h = hashText(await res.text());
+    const stored = localStorage.getItem(VERSION_HASH_KEY);
+    if (!stored) { localStorage.setItem(VERSION_HASH_KEY, h); return; }
+    if (stored === h) return;
+
+    localStorage.setItem(VERSION_HASH_KEY, h);
+    // Nicht mitten in einer Eingabe oder im offenen Modal neu laden
+    const typing = ['expDesc', 'expAmount', 'expEigen', 'evtText'].some(id => {
+      const el = document.getElementById(id);
+      return el && el.value.trim() !== '';
+    });
+    if (typing || document.getElementById('eventModal').classList.contains('open')) {
+      showToast('Neue Version verfügbar — App kurz schließen & öffnen');
+      return;
+    }
+    sessionStorage.setItem(JUST_UPDATED_KEY, '1');
+    location.reload();
+  } catch (e) { /* offline o.ä. — beim nächsten Öffnen erneut versuchen */ }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkForUpdate();
+});
+// iOS holt die Webapp oft aus dem Speicher zurück statt neu zu laden
+window.addEventListener('pageshow', (e) => { if (e.persisted) checkForUpdate(); });
+
 loadState();
 document.getElementById('expDate').value = todayISO();
 document.getElementById('evtDate').value = todayISO();
 renderAll();
+checkForUpdate();
+if (sessionStorage.getItem(JUST_UPDATED_KEY)) {
+  sessionStorage.removeItem(JUST_UPDATED_KEY);
+  showToast('App aktualisiert ✓');
+}
 </script>
 </body>
 </html>

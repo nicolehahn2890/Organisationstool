@@ -281,6 +281,9 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 
 - **localStorage-Key:** `nicole_tracker_v2`
 - **NIEMALS** den Key ohne triftigen Grund ändern — würde Nutzerdaten löschen
+- Zusätzliche Hilfs-Keys (KEINE Nutzerdaten, dürfen gelöscht werden):
+  - `nicole_tracker_version_hash` — Hash der zuletzt gesehenen App-Version (für Auto-Update)
+  - sessionStorage `nicole_tracker_just_updated` — Flag für den "App aktualisiert"-Toast
 - Falls schemata-breaking: Key bewusst inkrementieren (`_v3` etc.) und Migrations-Logik in `loadState()` ergänzen
 - Persistiert wird: theme, selectedCardId, expenses, events (inkl. overrides), viewMonth
 - **NICHT** persistiert: cards-Array (ist hartkodiert), Buchungsdaten (werden berechnet)
@@ -290,6 +293,24 @@ Beim Hinzufügen neuer Felder (wie damals `recurrence` und `overrides`):
 - Altes Schema muss weiter funktionieren
 - Defaults via `??` oder Existenz-Checks (`if (ev.overrides) { ... }`)
 - KEIN Zwang auf neues Feld
+
+### Auto-Update beim Öffnen
+iOS Home-Screen-Webapps frieren den alten Stand ein und laden nie von selbst nach.
+Darum prüft `checkForUpdate()` beim Start, bei `visibilitychange` (App kommt in
+den Vordergrund) und bei `pageshow` mit `persisted` (iOS Back-Forward-Cache):
+
+1. `fetch(location.href, { cache: 'no-store' })` — holt die aktuell deployte Version
+2. djb2-Hash des Textes vs. gespeicherter Hash (`nicole_tracker_version_hash`)
+3. Bei Unterschied: einmal `location.reload()` + Toast "App aktualisiert ✓"
+   (Flag via sessionStorage). Hash wird VOR dem Reload aktualisiert → kein Loop.
+4. Schutzregeln: max. 1 Check/Minute; KEIN Reload, wenn gerade in einem
+   Eingabefeld Text steht oder das Modal offen ist (dann nur Hinweis-Toast);
+   bei `file://` komplett deaktiviert.
+
+GitHub-Pages-CDN cached ~10 Minuten — so lange kann es nach einem Push maximal
+dauern, bis der Check die neue Version sieht. Nutzerdaten sind von Reloads
+nicht betroffen. **Nicht entfernen** — sonst sieht Nicole auf dem Handy
+Updates erst nach manuellem Cache-Leeren.
 
 ### Datenexport/-import (JSON)
 Header oben rechts (neben Theme-Toggle) hat zwei Icon-Buttons:
