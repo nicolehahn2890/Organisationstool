@@ -268,7 +268,7 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   gap: 16px;
 }
 .cc {
-  background: var(--surface);
+  background: linear-gradient(160deg, var(--cc-tint, var(--surface)) 0%, var(--surface) 65%);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 20px;
@@ -433,6 +433,7 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 .btn-primary {
   background: var(--zone, var(--peach));
   color: var(--on-accent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--zone, var(--peach)) 35%, transparent);
 }
 .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
 .btn-ghost {
@@ -462,6 +463,8 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   background: var(--surface);
   padding: 20px 24px;
 }
+/* Hervorgehobene Kennzahl: was diesen Monat wirklich vom Konto geht */
+.stat-hero { background: var(--zone-tint, var(--surface)); }
 .stat-label {
   font-size: 11px;
   color: var(--text-3);
@@ -636,20 +639,34 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 .qt {
   padding: 8px 14px;
   border-radius: 100px;
-  background: transparent;
-  border: 1px solid var(--line);
+  background: var(--surface-2);
+  border: 1px solid transparent;
   color: var(--text-2);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.01em;
   transition: all 0.18s ease;
 }
-.qt:hover { border-color: var(--line-2); color: var(--text); }
-.qt.active {
-  background: var(--minze);
-  border-color: var(--minze);
-  color: var(--on-accent);
-}
+.qt:hover { color: var(--text); }
+/* Jeder Quick-Tag zeigt seine Termin-Farbe als zarte Tönung */
+.qt[data-color="peach"]      { background: var(--peach-tint); }
+.qt[data-color="rosa"]       { background: var(--rosa-tint); }
+.qt[data-color="minze"]      { background: var(--minze-tint); }
+.qt[data-color="buttermilk"] { background: var(--buttermilk-tint); }
+.qt[data-color="violet"]     { background: var(--violet-tint); }
+.qt[data-color="peach"]:hover      { border-color: var(--peach); }
+.qt[data-color="rosa"]:hover       { border-color: var(--rosa); }
+.qt[data-color="minze"]:hover      { border-color: var(--minze); }
+.qt[data-color="buttermilk"]:hover { border-color: var(--buttermilk); }
+.qt[data-color="violet"]:hover     { border-color: var(--violet); }
+/* Aktiv: volle Termin-Farbe — zeigt direkt, wie der Termin aussehen wird */
+.qt.active { color: var(--on-accent); }
+.qt.active[data-color="peach"]      { background: var(--peach);      border-color: var(--peach); }
+.qt.active[data-color="rosa"]       { background: var(--rosa);       border-color: var(--rosa); }
+.qt.active[data-color="minze"],
+.qt.active:not([data-color])        { background: var(--minze);      border-color: var(--minze); }
+.qt.active[data-color="buttermilk"] { background: var(--buttermilk); border-color: var(--buttermilk); }
+.qt.active[data-color="violet"]     { background: var(--violet);     border-color: var(--violet); }
 
 .week {
   margin-bottom: 56px;
@@ -718,6 +735,8 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   font-weight: 500;
 }
 .day.today .day-name { color: var(--text-2); }
+.day.today .day-name::after { content: ' — Heute'; color: var(--minze); }
+.day.today .day-num { color: var(--minze); }
 .day-num {
   font-family: 'Fraunces', serif;
   font-size: 22px;
@@ -731,7 +750,8 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   gap: 6px;
 }
 .evt {
-  background: var(--bg);
+  background: var(--evt-tint, var(--bg));
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 12px;
@@ -742,8 +762,6 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   flex-direction: column;
   gap: 2px;
 }
-[data-theme="dark"] .evt { background: var(--surface-2); }
-.day.today .evt { background: var(--surface); }
 .evt:hover { transform: translateX(2px); }
 .evt-time {
   font-size: 10px;
@@ -1178,7 +1196,9 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
             <option value="daily">Täglich</option>
             <option value="every-2d">Alle 2 Tage</option>
             <option value="every-3d">Alle 3 Tage</option>
+            <option value="every-4d">Alle 4 Tage</option>
             <option value="every-5d">Alle 5 Tage</option>
+            <option value="every-6d">Alle 6 Tage</option>
             <option value="every-10d">Alle 10 Tage</option>
             <option value="weekly">Wöchentlich</option>
             <option value="every-2w">Alle 2 Wochen</option>
@@ -1254,6 +1274,14 @@ const CARDS = [
   { id: 'visa', name: 'Visa',      color: 'rosa',       logo: 'visa' },
   { id: 'giro', name: 'Girokonto', color: 'minze',      logo: 'giro' }
 ];
+
+const COLOR_TINT_VAR = {
+  peach:      'var(--peach-tint)',
+  rosa:       'var(--rosa-tint)',
+  minze:      'var(--minze-tint)',
+  buttermilk: 'var(--buttermilk-tint)',
+  violet:     'var(--violet-tint)'
+};
 
 const COLOR_VAR = {
   peach:      'var(--peach)',
@@ -1461,6 +1489,7 @@ function renderCards() {
     const div = document.createElement('div');
     div.className = 'cc' + (state.selectedCardId === c.id ? ' selected' : '');
     div.style.setProperty('--cc-color', COLOR_VAR[c.color]);
+    div.style.setProperty('--cc-tint', COLOR_TINT_VAR[c.color]);
     div.innerHTML = `
       <div class="cc-top">
         <div class="cc-type-name">${c.name}</div>
@@ -1729,7 +1758,7 @@ function renderStats() {
       <div class="stat-label">Ausgegeben</div>
       <div class="stat-value">${formatEUR(expenseTotal)}</div>
     </div>
-    <div class="stat">
+    <div class="stat stat-hero">
       <div class="stat-label">Abbuchung gesamt</div>
       <div class="stat-value">${formatEUR(bookingTotal)}</div>
     </div>
@@ -2036,6 +2065,7 @@ function renderWeeks() {
         const chip = document.createElement('div');
         chip.className = 'evt';
         chip.style.setProperty('--evt-color', COLOR_VAR[ev.color] || COLOR_VAR.minze);
+        chip.style.setProperty('--evt-tint', COLOR_TINT_VAR[ev.color] || COLOR_TINT_VAR.minze);
         const recLabel = ev.recurrence ? '↻ ' + recurrenceLabel(ev.recurrence) : '';
         chip.innerHTML = `
           ${ev.time ? `<div class="evt-time">${ev.time}</div>` : ''}

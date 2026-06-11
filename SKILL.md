@@ -34,6 +34,11 @@ description: >
 - Editorial / Magazin-Stil — warmes Off-White, viel Weißraum, Typografie als Hauptelement
 - Klare Hierarchie durch große italic Section-Titles
 - Akzentfarben pro Bereich fest zugewiesen — KEIN globaler Akzent-Toggle
+- Tints werden aktiv als Flächenfarben genutzt: Karten-Kacheln haben einen
+  Verlauf von ihrer Tint-Farbe zu `--surface` (`--cc-tint`), Termin-Chips und
+  Quick-Tags sind in ihrer Farbe getönt, die Stat-Box "Abbuchung gesamt" hat
+  `.stat-hero` (Zone-Tint als Hintergrund)
+- "Heute"-Tag in der Wochenansicht: minze Tagesnummer + Suffix " — Heute" am Tagesnamen (CSS ::after)
 
 ### Schriften (Google Fonts CDN)
 - **Fraunces** (Italic-Serife) — nur für Headlines, Beträge, Tagesnummern
@@ -161,7 +166,10 @@ In `getMonthExpenses` wird der Tag der Projektion via `Math.min(origTag, letzter
 ## Tab 2: Termine
 
 ### Quick-Tags (10 feste Buttons mit Default-Farben)
-Jeder Tag hat eine fest zugeordnete `data-color` als Vorschlag:
+Jeder Tag hat eine fest zugeordnete `data-color` als Vorschlag. Die Buttons sind
+in ihrer Default-Farbe GETÖNT (CSS `[data-color=...]` → `--*-tint`); im aktiven
+Zustand volle Akzentfarbe — so sieht man vor dem Speichern, wie der Termin
+aussehen wird:
 
 | Tag | Default-Farbe |
 |---|---|
@@ -189,7 +197,7 @@ Logik: `selectedManualColor || selectedQuickTagColor || 'minze'`
 Dropdown im Formular:
 - Keine
 - Täglich
-- Alle 2 Tage / Alle 3 Tage / Alle 5 Tage / Alle 10 Tage
+- Alle 2 Tage / Alle 3 Tage / Alle 4 Tage / Alle 5 Tage / Alle 6 Tage / Alle 10 Tage
 - Wöchentlich
 - Alle 2 Wochen / Alle 4 Wochen
 - Monatlich
@@ -261,7 +269,8 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Overrides (optional, nur wenn einzelne Instanzen geändert wurden)
 
 ### Termin-Chip Layout
-- Linke Border in der Termin-Farbe
+- Hintergrund in der TINT-Version der Termin-Farbe (`--evt-tint`, via `COLOR_TINT_VAR` in JS gesetzt) + 1px `--line`-Border (Abgrenzung auch im Heute-Feld)
+- Linke Border (3px) in der vollen Termin-Farbe
 - Optional Uhrzeit (klein)
 - Beschreibung — **MUSS** umbrechen können (`white-space: normal`, `overflow-wrap: anywhere`) — KEIN `text-overflow: ellipsis` mit `nowrap` (kappt sonst lange Texte ab)
 - Optional Recurrence-Label
@@ -397,7 +406,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ### Termine
 ✅ 10 Quick-Tags mit Default-Farben (inkl. 💉 Botox, ❤️ Date, 🎉 Feiertag)
 ✅ Farb-Picker im Formular (Auto + 5 Farben, manuell überschreibbar)
-✅ Wiederholungen: keine / täglich / alle 2/3/5/10 Tage / wöchentlich / alle 2/4 Wochen / monatlich (über `every-Nd` / `every-Nw`-Format, abwärtskompatibel)
+✅ Wiederholungen: keine / täglich / alle 2/3/4/5/6/10 Tage / wöchentlich / alle 2/4 Wochen / monatlich (über `every-Nd` / `every-Nw`-Format, abwärtskompatibel)
 ✅ Override-System: einzelne Serien-Instanzen löschen/verschieben/umbenennen ohne Serie zu zerstören
 ✅ Modal mit 4 Aktionen bei Recurring (Diesen/Serie × Löschen/Bearbeiten)
 ✅ 3-Wochen-Übersicht (timezone-safe)
