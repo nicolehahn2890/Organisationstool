@@ -265,7 +265,7 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Datum (Pflicht)
 - Uhrzeit (optional)
 - Farbe (peach/rosa/minze/buttermilk/violet — Default vom Quick-Tag)
-- Recurrence (null/weekly/monthly)
+- Recurrence (null / `daily` / `weekly` / `monthly` / `every-Nd` / `every-Nw`)
 - Overrides (optional, nur wenn einzelne Instanzen geändert wurden)
 
 ### Termin-Chip Layout
@@ -384,14 +384,14 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 3. **Lesen:** Aktuelle `index.html` vollständig lesen
 4. **Ändern:** Mit `str_replace` für kleine, gezielte Edits — oder Python read/modify/write für große Umbauten
 5. **Verifizieren:**
-   - Keine `toISOString()`-Aufrufe
+   - Keine `toISOString()`-Aufrufe für Datums-Strings (einzige erlaubte Ausnahme: `_meta.exportedAt`-Zeitstempel im Export)
    - Keine `°` Zeichen
    - Keine Form-Tags
    - localStorage-Key unverändert
    - Theme-Attribut auf `<html>` UND `<body>`
    - Schema-Erweiterungen abwärtskompatibel
-6. **Committen & Pushen:** Direkt auf `main` committen und pushen — GitHub Pages deployed automatisch innerhalb von 1–2 Minuten. Branch-Setup (`claude/...`) ist deaktiviert, Nicole arbeitet direkt auf `main`.
-7. **Hinweis an Nicole:** Browser-Cache auf Handy/Desktop kann veraltet sein — bei Tests Hard-Reload empfehlen.
+6. **Committen & Pushen:** Direkt auf `main` committen und pushen — GitHub Pages deployed automatisch innerhalb von 1–2 Minuten. NIEMALS auf separaten Branches arbeiten (Nicole will ausdrücklich alles direkt auf `main`).
+7. **Hinweis an Nicole:** Die App aktualisiert sich seit Juni 2026 beim Öffnen selbst (Auto-Update-Check). Nach einem Push kann es durch das GitHub-Pages-CDN trotzdem bis zu ~10 Minuten dauern, bis die neue Version ankommt — bei "ich sehe nichts Neues" zuerst darauf hinweisen, App einmal richtig schließen (App-Switcher) und neu öffnen.
 
 ---
 
@@ -402,6 +402,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 - Dark Mode wirkt "kaputt" wenn nur einzelne Kacheln dunkel sind — sicherstellen dass `bg`, `surface`, `surface-2`, `line`, `text` alle als CSS-Variablen aus dem Theme-Block gezogen werden, keine hardcoded Hex-Werte außerhalb des Theme-Blocks (Ausnahme: Akzentfarben, Trend-Rot/Grün).
 - Surface-Farbe im Dark Mode muss **deutlich heller** als BG sein (`#252220` vs. `#1A1816`) — sonst keine Hierarchie.
 - Vorschau-Cache: Bei Tests immer Hard-Reload (Strg+F5) — sonst zeigt der Browser veraltete Versionen.
+- **iOS Home-Screen-Webapp friert die alte Version ein** — lädt nie von selbst nach. Gelöst durch den Auto-Update-Check (siehe Storage-Kapitel). WICHTIG: Das Icon auf dem Home-Bildschirm hat einen EIGENEN localStorage (getrennt von Safari). Icon löschen = Daten weg → vor jedem Neu-Hinzufügen IMMER zuerst Export (⬇) machen. Niemals empfehlen, das Icon "einfach neu hinzuzufügen", ohne auf den Export hinzuweisen.
 - Wenn Karte 0,00 € zeigt obwohl Buchungen drin sind: Pending-Hinweis prüfen — Käufe könnten erst im Folgemonat abgebucht werden (richtige Logik, missverständliche Anzeige verhindert das).
 - Termin-Texte werden abgeschnitten → IMMER `white-space: normal` + `overflow-wrap: anywhere` für `.evt-text`
 - **Buchungslisten-Texte werden abgeschnitten** → IMMER `word-break: break-word` + `overflow-wrap: anywhere` + `flex-wrap: wrap` für `.exp-desc`. Ellipsis ist hier nie erwünscht (anders als z.B. in Mail-Listen).
@@ -410,7 +411,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 
 ---
 
-## Aktuelle Feature-Liste (Stand: Mai 2026)
+## Aktuelle Feature-Liste (Stand: Juni 2026)
 
 ### Ausgaben
 ✅ 3 feste Karten: Amex, Visa, Girokonto
@@ -444,3 +445,5 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ✅ Touch-optimiert: Lösch-X auf Handy immer sichtbar, größere Tippflächen, Sonntag ohne Layout-Loch
 ✅ Sticky Tabs, Favicon, theme-color synchron zum Theme, prefers-reduced-motion
 ✅ Abo-Projektion klemmt Tag auf Monatsende (kein "31. Februar" mehr)
+✅ Auto-Update beim Öffnen (löst das iOS-Home-Screen-Cache-Problem; Toast "App aktualisiert ✓")
+✅ Design-Glow-up: getönte Termin-Chips & Quick-Tags, Karten mit Farbverlauf, `.stat-hero` für "Abbuchung gesamt", "— Heute"-Label
