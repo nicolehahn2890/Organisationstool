@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Tracker</title>
+<meta name="theme-color" id="metaThemeColor" content="#F6F2EC" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%23E89878'/%3E%3Cstop%20offset='0.5'%20stop-color='%23E29BB5'/%3E%3Cstop%20offset='1'%20stop-color='%237CC4A7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%231A1816'/%3E%3Ccircle%20cx='32'%20cy='32'%20r='14'%20fill='url(%23g)'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -99,6 +101,10 @@ body {
 }
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; font-size: inherit; }
+button:focus-visible {
+  outline: 2px solid var(--zone, var(--line-2));
+  outline-offset: 2px;
+}
 
 input, select, textarea {
   font-family: inherit;
@@ -190,6 +196,12 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   gap: 32px;
   margin-bottom: 48px;
   border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg);
+  padding-top: 12px;
+  transition: background 0.3s ease;
 }
 .tab {
   padding: 0 0 16px 0;
@@ -343,6 +355,18 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   border-radius: 50%;
 }
 .month-nav-btn:hover { color: var(--text); background: var(--surface); }
+.month-today-btn {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 5px 12px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.month-today-btn:hover { color: var(--text); border-color: var(--line-2); }
 .month-label {
   font-family: 'Fraunces', serif;
   font-style: italic;
@@ -870,6 +894,55 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   font-style: italic;
   font-family: 'Fraunces', serif;
 }
+.empty::before {
+  content: '·';
+  display: block;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, var(--peach), var(--rosa) 40%, var(--minze));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Validierungs-Feedback */
+.input-error {
+  border-color: #C7726B !important;
+  animation: shake 0.3s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Toast — kurze Bestätigung nach Aktionen */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 22px;
+  border-radius: 100px;
+  box-shadow: var(--shadow-3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 200;
+  max-width: calc(100vw - 40px);
+  text-align: center;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 @media (max-width: 880px) {
   .app { padding: 24px 20px 60px; }
@@ -878,6 +951,8 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .stats-row .stat:last-child { grid-column: span 2; }
   .day-grid { grid-template-columns: repeat(2, 1fr); }
+  .day-grid .day:last-child { grid-column: span 2; }
+  .day { min-height: 100px; }
   .bar-row { grid-template-columns: 110px 1fr 70px; gap: 10px; font-size: 12px; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 16px; }
   .section-title { font-size: 22px; }
@@ -885,10 +960,26 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   .cards-row { grid-template-columns: 1fr; }
   .stat { padding: 16px 18px; }
   .stat-value { font-size: 22px; }
+  .qt { padding: 10px 16px; }
 }
 @media (min-width: 881px) and (max-width: 1100px) {
   .stat { padding: 16px 18px; }
   .stat-value { font-size: 22px; }
+}
+
+/* Touch-Geräte: kein Hover — Lösch-X immer sichtbar, größere Tippflächen */
+@media (hover: none) {
+  .exp-del { opacity: 1; }
+  .month-nav-btn { width: 36px; height: 36px; }
+  .day-add { height: 32px; }
+  .evt-color-pick { width: 30px; height: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @keyframes fadeUp {
@@ -942,12 +1033,13 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
           <button class="month-nav-btn" id="btnPrevMonth" aria-label="Vorheriger Monat">‹</button>
           <span class="month-label" id="monthLabel"></span>
           <button class="month-nav-btn" id="btnNextMonth" aria-label="Nächster Monat">›</button>
+          <button class="month-today-btn" id="btnMonthToday" title="Zum aktuellen Monat springen" style="display:none">Heute</button>
         </div>
       </div>
       <div class="cards-row" id="cardsGrid"></div>
     </section>
 
-    <section class="section zone-rosa">
+    <section class="section zone-rosa" id="expenseFormSection">
       <div class="section-head">
         <h2 class="section-title">Neue <em>Ausgabe</em></h2>
         <span class="section-meta">Schnell erfassen</span>
@@ -1031,7 +1123,7 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 
   <main id="tab-events" style="display:none;">
 
-    <section class="section zone-minze">
+    <section class="section zone-minze" id="eventFormSection">
       <div class="section-head">
         <h2 class="section-title">Neuer <em>Termin</em></h2>
         <span class="section-meta">Tag wählen oder eigenen eintragen</span>
@@ -1149,6 +1241,8 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   </div>
 </div>
 
+<div class="toast" id="appToast" role="status" aria-live="polite"></div>
+
 <script>
 const STORAGE_KEY = 'nicole_tracker_v2';   // <- neuer Key, alter Stand wird ignoriert
 
@@ -1237,13 +1331,14 @@ function exportData() {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const ts = new Date().toISOString().slice(0, 10);
+  const ts = todayISO();
   a.href = url;
   a.download = `tracker-backup-${ts}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('Backup heruntergeladen ✓');
 }
 
 function importData(file) {
@@ -1273,7 +1368,7 @@ function importData(file) {
 
       saveState();
       renderAll();
-      alert('Import erfolgreich.');
+      showToast('Import erfolgreich ✓');
     } catch (err) {
       alert('Import fehlgeschlagen: ' + err.message);
     }
@@ -1289,6 +1384,32 @@ function applyTheme() {
   document.body.setAttribute('data-theme', state.theme);
   const icon = document.getElementById('themeIcon');
   if (icon) icon.innerHTML = state.theme === 'light' ? ICON_MOON : ICON_SUN;
+  // Browser-Farbleiste (mobil) ans Theme anpassen
+  const meta = document.getElementById('metaThemeColor');
+  if (meta) meta.setAttribute('content', state.theme === 'light' ? '#F6F2EC' : '#1A1816');
+}
+
+/* ---------------------------------------------------------
+   FEEDBACK — Toast + Validierungs-Markierung
+--------------------------------------------------------- */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('appToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Markiert ein Pflichtfeld rot (mit kurzem Schütteln) und fokussiert es.
+// Markierung verschwindet, sobald getippt wird.
+function flagInvalid(el) {
+  el.classList.remove('input-error');
+  void el.offsetWidth; // Animation neu starten
+  el.classList.add('input-error');
+  el.focus();
+  el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
 }
 
 document.getElementById('themeToggle').addEventListener('click', () => {
@@ -1441,7 +1562,12 @@ function getMonthExpenses(yyyymm, mode = 'expense') {
       // dort hingehört).
       if (startMonth >= candMonth) continue;
 
-      const projectedDate = candMonth + '-' + e.date.slice(8, 10);
+      // Tag auf den letzten Tag des Zielmonats begrenzen — sonst entstehen
+      // ungültige Daten wie "31. Februar" bei Abos vom 29.-31.
+      const [cy, cm] = candMonth.split('-').map(Number);
+      const lastDay = new Date(cy, cm, 0).getDate();
+      const day = Math.min(Number(e.date.slice(8, 10)), lastDay);
+      const projectedDate = candMonth + '-' + String(day).padStart(2, '0');
       const projected = {
         ...e,
         id: e.id + '_' + candMonth,
@@ -1468,10 +1594,10 @@ document.getElementById('addExpenseBtn').addEventListener('click', () => {
   const eigenRaw = document.getElementById('expEigen').value;
   const eigenAmount = eigenRaw === '' ? null : parseFloat(eigenRaw);
 
-  if (!desc) { document.getElementById('expDesc').focus(); return; }
-  if (isNaN(amount) || amount <= 0) { document.getElementById('expAmount').focus(); return; }
+  if (!desc) { flagInvalid(document.getElementById('expDesc')); return; }
+  if (isNaN(amount) || amount <= 0) { flagInvalid(document.getElementById('expAmount')); return; }
   if (eigenAmount !== null && (isNaN(eigenAmount) || eigenAmount < 0)) {
-    document.getElementById('expEigen').focus(); return;
+    flagInvalid(document.getElementById('expEigen')); return;
   }
 
   state.expenses.push({
@@ -1487,13 +1613,21 @@ document.getElementById('addExpenseBtn').addEventListener('click', () => {
   document.getElementById('expRecurring').checked = false;
 
   renderExpensesTab();
+  showToast(recurring ? 'Abo gespeichert ✓' : 'Ausgabe gespeichert ✓');
 });
 
 function deleteExpense(id) {
-  if (!confirm('Diese Ausgabe wirklich löschen?')) return;
+  const exp = state.expenses.find(e => e.id === id);
+  // Bei Abos deutlich warnen: es wird die komplette Serie entfernt,
+  // nicht nur die angeklickte (ggf. projizierte) Instanz.
+  const msg = exp && exp.recurring
+    ? `Das Abo "${exp.desc}" komplett löschen?\nEs wird aus allen Monaten entfernt.`
+    : 'Diese Ausgabe wirklich löschen?';
+  if (!confirm(msg)) return;
   state.expenses = state.expenses.filter(e => e.id !== id);
   saveState();
   renderExpensesTab();
+  showToast(exp && exp.recurring ? 'Abo gelöscht' : 'Ausgabe gelöscht');
 }
 
 function renderExpenseList() {
@@ -1638,7 +1772,16 @@ function renderStats() {
 
 function updateMonthLabel() {
   document.getElementById('monthLabel').textContent = monthLabel(state.viewMonth);
+  // "Heute"-Knopf nur zeigen, wenn nicht der aktuelle Monat angezeigt wird
+  const currentMonth = todayISO().slice(0, 7);
+  document.getElementById('btnMonthToday').style.display =
+    state.viewMonth === currentMonth ? 'none' : '';
 }
+document.getElementById('btnMonthToday').addEventListener('click', () => {
+  state.viewMonth = todayISO().slice(0, 7);
+  saveState();
+  renderExpensesTab();
+});
 document.getElementById('btnPrevMonth').addEventListener('click', () => {
   state.viewMonth = prevMonth(state.viewMonth);
   saveState();
@@ -1700,8 +1843,8 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   const time = document.getElementById('evtTime').value;
   const recurrence = document.getElementById('evtRecurrence').value;
 
-  if (!text) { document.getElementById('evtText').focus(); return; }
-  if (!date) { document.getElementById('evtDate').focus(); return; }
+  if (!text) { flagInvalid(document.getElementById('evtText')); return; }
+  if (!date) { flagInvalid(document.getElementById('evtDate')); return; }
 
   // Farbe entscheiden: manuelle Auswahl > Tag-Default > minze
   let color = selectedManualColor || selectedQuickTagColor || 'minze';
@@ -1726,6 +1869,7 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   );
 
   renderWeeks();
+  showToast('Termin gespeichert ✓');
 });
 
 // Liefert das Intervall in Tagen für tagebasierte Wiederholungen, sonst null.
@@ -2043,8 +2187,8 @@ function saveEdit() {
   const activeColorBtn = document.querySelector('#evtEditColorPicker .evt-color-pick.active');
   const newColor = activeColorBtn ? activeColorBtn.dataset.color : (ctx.resolved.color || 'minze');
 
-  if (!newText) { document.getElementById('evtEditText').focus(); return; }
-  if (!newDate) { document.getElementById('evtEditDate').focus(); return; }
+  if (!newText) { flagInvalid(document.getElementById('evtEditText')); return; }
+  if (!newDate) { flagInvalid(document.getElementById('evtEditDate')); return; }
 
   if (ctx.scope === 'series' || !ctx.event.recurrence) {
     // Ganze Serie / Einzeltermin: Original ändern
@@ -2066,6 +2210,7 @@ function saveEdit() {
   saveState();
   closeEventModal();
   renderWeeks();
+  showToast('Termin aktualisiert ✓');
 }
 
 function deleteOccurrence() {
@@ -2095,6 +2240,33 @@ function closeEventModal() {
 }
 document.getElementById('eventModal').addEventListener('click', (e) => {
   if (e.target.id === 'eventModal') closeEventModal();
+});
+
+/* ---------------------------------------------------------
+   TASTATUR — Enter speichert, Escape schließt das Modal
+--------------------------------------------------------- */
+function enterSubmits(sectionId, buttonId) {
+  document.getElementById(sectionId).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('input')) {
+      e.preventDefault();
+      document.getElementById(buttonId).click();
+    }
+  });
+}
+enterSubmits('expenseFormSection', 'addExpenseBtn');
+enterSubmits('eventFormSection', 'addEventBtn');
+
+document.getElementById('eventModal').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.matches('input')) {
+    e.preventDefault();
+    const save = document.getElementById('actSave');
+    if (save) save.click();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('eventModal').classList.contains('open')) {
+    closeEventModal();
+  }
 });
 
 /* ---------------------------------------------------------

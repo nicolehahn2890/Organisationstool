@@ -151,6 +151,10 @@ Letzte Box bekommt im Mobile-Layout volle Breite — kein "Loch" mehr. Bei Erwei
 - Pfeile ‹ › neben Monatslabel im Karten-Section-Header
 - Funktionen `prevMonth(yyyymm)` / `nextMonth(yyyymm)` arbeiten **rein mit Strings** — KEIN `Date`-Objekt verwenden (Timezone-Probleme)
 - Button-IDs heißen `btnPrevMonth` / `btnNextMonth` — NICHT `prevMonth`/`nextMonth`, sonst überschreibt der Browser die globalen Funktionen
+- **"Heute"-Button** (`btnMonthToday`): erscheint nur, wenn `viewMonth` ≠ aktueller Monat; springt zurück zum aktuellen Monat. Sichtbarkeit wird in `updateMonthLabel()` gesteuert.
+
+### Abo-Projektion: Tag wird auf Monatsende geklemmt
+In `getMonthExpenses` wird der Tag der Projektion via `Math.min(origTag, letzterTagDesZielmonats)` begrenzt — sonst entstehen ungültige Daten wie "2026-02-31" bei Abos vom 29.–31. (führte zu "Invalid Date" in der Anzeige und falschen Visa-Buchungsdaten). Letzter Tag via `new Date(y, m, 0).getDate()` (m = 1-basiert).
 
 ---
 
@@ -301,6 +305,23 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 - Kein Node.js, kein npm, kein Build-Step
 - Fonts via Google Fonts CDN
 - Kein `<form>`-Tag — immer Button mit `onclick` oder `addEventListener`
+- **KEIN PWA-Manifest / kein `apple-mobile-web-app-capable`** — eine installierte Home-Screen-App bekäme auf iOS einen EIGENEN, leeren localStorage; Nicoles Daten wären dort scheinbar weg. Erlaubt sind nur: `theme-color`-Meta (wird in `applyTheme()` mit dem Theme synchron gehalten, ID `metaThemeColor`) und das SVG-Favicon als data-URI.
+
+### Feedback-System (Toast + Validierung)
+- `showToast(msg)` — kurze Bestätigung unten mittig (Element `#appToast`, Klasse `.toast.show`, 2,2 s). Wird genutzt bei: Ausgabe/Abo gespeichert, gelöscht, Termin gespeichert/aktualisiert, Export, Import.
+- `flagInvalid(el)` — markiert ein Pflichtfeld rot mit Shake-Animation (Klasse `.input-error`), fokussiert es; Markierung verschwindet beim Tippen. Alle Pflichtfeld-Checks nutzen das statt stillem `focus()`.
+- Lösch-Bestätigungen bleiben `confirm()`. Bei Abos warnt `deleteExpense` explizit, dass das KOMPLETTE Abo aus allen Monaten entfernt wird (auch wenn nur eine projizierte Instanz angeklickt wurde).
+
+### Tastatur-Bedienung
+- Enter in einem Input der Formular-Sections (`#expenseFormSection`, `#eventFormSection`) löst den jeweiligen Speichern-Button aus (Helper `enterSubmits`).
+- Enter im Modal-Edit speichert (`#actSave`), Escape schließt das Modal.
+- Section-IDs heißen bewusst `...Section` — keine Kollision mit Funktionsnamen.
+
+### Touch / Mobile
+- `@media (hover: none)`: Lösch-X (`.exp-del`) ist IMMER sichtbar (Hover existiert auf Touch nicht), größere Tippflächen für Monats-Pfeile, Tag-Plus und Farb-Punkte.
+- Mobile (≤880px): letzter Tag der Woche (`.day-grid .day:last-child`) spannt 2 Spalten — sonst "Loch" neben Sonntag (gleiche Logik wie bei den Stat-Boxen).
+- `.tabs` ist `position: sticky` (top: 0, bg: var(--bg)) — Tabs bleiben beim Scrollen oben.
+- `prefers-reduced-motion: reduce` wird respektiert (Animationen/Transitions quasi aus).
 
 ### String-Replacement in Claude Code
 - Bei Änderungen: gezielt mit `str_replace` für kleine Edits — oder Python read/modify/write für große Umbauten
@@ -387,3 +408,9 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ✅ localStorage-Persistenz unter `nicole_tracker_v2`
 ✅ JSON-Export/-Import im Header (Backup + Migration zwischen Origins)
 ✅ Editorial-Modern Design mit Fraunces + Inter
+✅ "Heute"-Button in der Monatsnavigation (nur sichtbar wenn nicht im aktuellen Monat)
+✅ Toast-Bestätigungen + rote Pflichtfeld-Markierung mit Shake
+✅ Enter speichert Formulare, Escape schließt das Modal
+✅ Touch-optimiert: Lösch-X auf Handy immer sichtbar, größere Tippflächen, Sonntag ohne Layout-Loch
+✅ Sticky Tabs, Favicon, theme-color synchron zum Theme, prefers-reduced-motion
+✅ Abo-Projektion klemmt Tag auf Monatsende (kein "31. Februar" mehr)
