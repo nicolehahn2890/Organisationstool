@@ -20,7 +20,7 @@ description: >
 
 - **Live-URL:** https://nicolehahn2890.github.io/Organisationstool
 - **GitHub Repo:** https://github.com/nicolehahn2890/Organisationstool
-- **Dateistruktur:** Einzelne `index.html` — alles in einer Datei, kein Build-Step
+- **Dateistruktur:** Einzelne `index.html` — alles in einer Datei, kein Build-Step (einzige Ausnahme: `apple-touch-icon.png` für das Home-Screen-Icon)
 - **Deployment:** Direkt via GitHub Pages (push → live)
 - **Zweck:** Persönlicher Tracker für Nicole mit zwei Hauptbereichen:
   1. **Ausgaben** — Tracking von Kreditkarten-Ausgaben mit automatischer Buchungsdatum-Berechnung
@@ -335,7 +335,8 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 - Kein Node.js, kein npm, kein Build-Step
 - Fonts via Google Fonts CDN
 - Kein `<form>`-Tag — immer Button mit `onclick` oder `addEventListener`
-- **KEIN PWA-Manifest / kein `apple-mobile-web-app-capable`** — eine installierte Home-Screen-App bekäme auf iOS einen EIGENEN, leeren localStorage; Nicoles Daten wären dort scheinbar weg. Erlaubt sind nur: `theme-color`-Meta (wird in `applyTheme()` mit dem Theme synchron gehalten, ID `metaThemeColor`) und das SVG-Favicon als data-URI.
+- **KEIN PWA-Manifest / kein `apple-mobile-web-app-capable`** — eine installierte Home-Screen-App bekäme auf iOS einen EIGENEN, leeren localStorage; Nicoles Daten wären dort scheinbar weg. Erlaubt sind nur: `theme-color`-Meta (wird in `applyTheme()` mit dem Theme synchron gehalten, ID `metaThemeColor`), das SVG-Favicon als data-URI und das Home-Screen-Icon (nächster Punkt).
+- **`apple-touch-icon.png`** (180×180, im Repo-Root) — EINZIGE erlaubte Zusatzdatei neben `index.html`. Motiv: Mini-Kalender mit bunten Termin-Punkten auf Off-White, von Nicole im Juni 2026 ausgewählt. Ist nur ein Bild, ändert NICHTS am Storage-Verhalten. Erscheint erst bei NEU hinzugefügten Home-Screen-Icons (bestehende behalten ihren Screenshot).
 
 ### Feedback-System (Toast + Validierung)
 - `showToast(msg)` — kurze Bestätigung unten mittig (Element `#appToast`, Klasse `.toast.show`, 2,2 s). Wird genutzt bei: Ausgabe/Abo gespeichert, gelöscht, Termin gespeichert/aktualisiert, Export, Import.
