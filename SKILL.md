@@ -334,7 +334,7 @@ iOS Home-Screen-Webapps frieren den alten Stand ein und laden nie von selbst nac
 Darum prüft `checkForUpdate()` beim Start, bei `visibilitychange` (App kommt in
 den Vordergrund) und bei `pageshow` mit `persisted` (iOS Back-Forward-Cache):
 
-1. `fetch(location.href, { cache: 'no-store' })` — holt die aktuell deployte Version
+1. `fetch(<base-URL>?_cb=<timestamp>, { cache: 'no-store' })` — holt die aktuell deployte Version. **Wichtig:** eindeutiger Cache-Buster-Query, weil iOS-Home-Screen-Webapps (WKWebView) `no-store` teilweise ignorieren und sonst die alte Datei aus dem Cache liefern → Hash bliebe gleich → kein Update.
 2. djb2-Hash des Textes vs. gespeicherter Hash (`nicole_tracker_version_hash`)
 3. Bei Unterschied: einmal `location.reload()` + Toast "App aktualisiert ✓"
    (Flag via sessionStorage). Hash wird VOR dem Reload aktualisiert → kein Loop.

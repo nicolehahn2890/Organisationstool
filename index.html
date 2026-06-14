@@ -2651,7 +2651,12 @@ async function checkForUpdate() {
   if (now - lastUpdateCheck < 60000) return; // höchstens 1x pro Minute
   lastUpdateCheck = now;
   try {
-    const res = await fetch(location.href, { cache: 'no-store' });
+    // Cache-Buster: iOS-Home-Screen-Webapps (WKWebView) ignorieren `no-store`
+    // teilweise und liefern die alte Datei aus dem Cache → der Hash bliebe
+    // gleich und die App würde nie aktualisieren. Eine eindeutige Query-URL
+    // erzwingt einen echten frischen Abruf von GitHub Pages.
+    const base = location.href.split('#')[0].split('?')[0];
+    const res = await fetch(base + '?_cb=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) return;
     const h = hashText(await res.text());
     const stored = localStorage.getItem(VERSION_HASH_KEY);
