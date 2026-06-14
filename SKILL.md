@@ -46,15 +46,17 @@ description: >
 - Candy-pastell bei Tag (oder deep-lilac bei Nacht); ein weicher Pastell-Radial-Gradient-Wash liegt hinter allem (`body`-Background, `background-attachment: fixed`)
 - Hierarchie durch dicke runde **Baloo 2**-Display-Schrift, glossy Gradient-Karten und farbige Glows. **Keine Kursiven mehr** — die runden Formen tragen die Persönlichkeit
 - Akzentfarben pro Bereich fest zugewiesen — KEIN globaler Akzent-Toggle
-- **Glass-Bubble-Rezept** ist das Herz: jede "Bubble" (Buttons, Karten, Stat-Kacheln, Inputs, Tabs, Tageszellen, Buchungen) hat eine Glanz-Kappe oben (`::before`), inneren Top-Highlight + Bottom-Schatten, einen inneren Ring und einen äußeren Glow. Farbige Bubbles tragen zusätzlich einen Holo-Schimmer (`::after` mit `--holo`, `mix-blend-mode: screen`, radial maskiert)
+- **Glass-Bubble-Rezept** ist das Herz: jede "Bubble" (Buttons, Karten, Stat-Kacheln, Inputs, Tabs, Tageszellen, Buchungen, Quick-Tags, Termin-Chips) hat eine Glanz-Kappe oben (`::before`), inneren Top-Highlight + Bottom-Schatten, einen inneren Ring, einen weichen äußeren Schlagschatten (Tiefe) und ggf. einen farbigen Glow. Farbige Bubbles tragen zusätzlich einen Holo-Schimmer (`::after` mit `--holo`, `mix-blend-mode: screen`, radial maskiert)
   - **Farbige Bubble:** Fill = `--zone-grad`, Ink = `--on-grad` (+ `text-shadow: 0 1px 0 var(--on-grad-sh)`)
   - **Weiße/neutrale Bubble:** Fill = `linear-gradient(180deg, var(--surface), var(--surface-2))`, 1–2px `--line`, innerer Glass-Ring
+  - **Soft-Glass (getönte Pille)** — Quick-Tags & Termin-Chips: Fill = `--*-tint` + weißer Top-Highlight-Radial, `box-shadow` mit weißem Inner-Top, farbig getöntem Inner-Bottom + Ring (`color-mix` mit dem Akzent) und weichem farbigem Glow. Aktiv → volle farbige Bubble (`--*-grad` + `--on-grad`-Ink).
   - Alle Gloss-Werte über `--glass-cap / --glass-hi / --glass-ring` → dimmen im Dark Mode automatisch zu bläulichem "Moonlight"
+- **Tiefe / Schatten (KRITISCH — sonst wirkt alles "draufgeklatscht"):** neutrale Kästen (Tageszellen `.day`, Buchungskarten `.exp-item`) nutzen die Tokens **`--lift` / `--lift-hover`** — ein weicher, zweischichtiger Schatten (kleiner negativer Spread, **großer Blur**, mehrere Lagen) statt eines knappen `… -14px …`-Schattens. Eingabefelder bekommen einen weichen Drop-Shadow (+ farbigen im Fokus). Buchungskarten = `--lift` PLUS farbiger Glow in der Kartenfarbe (`--card-color`, in `renderExpenseList` gesetzt). Faustregel: lieber großer Blur + niedrige Opazität als harte, enge Schatten.
 - Wordmark **`✦tracker`**: das ✦ mit `--holo` gefüllt (background-clip:text), das Wort "tracker" solide in `--text` (NICHT holo — war unleserlich), lowercase
 - **Buttons (exakt nach `references/glass-look-reference.html`):** ALLE Buttons sind Glass-Pills mit Glanz-Kappe (`.btn::before`). **Primary** (`.btn-primary`) = `--zone-grad`-Fill (Fallback `--holo`), `--on-grad`-Ink, Holo-Lichtbrechung (`::after`), farbiger Glow `color-mix(--zone 65%)` + Oberkanten-Highlight `inset 0 2px 0`, weight 700, Padding 17px 34px, ✦-Sparkle voran. **Ghost** (`.btn-ghost`) = neutrale weiße Glass-Pill (`--surface-2` + Gloss), NICHT transparent. **Danger** (`.btn-danger`) = danger-getönte Glass-Pill, `--danger-strong`-Text. NICHT auf flachen Text reduzieren.
 - Tabs = Pill-Container (weiße Bubble); aktiver Tab = farbige Bubble (Ausgaben=peach-grad, Termine=minze-grad)
 - Stat-Reihe ("Überblick") ist ein Candy-Rainbow aus farbigen Bubbles: Ausgegeben=lilac, Abbuchung gesamt=butter (+✦), Mein Anteil=mint, vs.Vormonat=sky, Buchungen=pink
-- Buchungsliste: jede Buchung ist eine eigene **weiße** Glass-Karte (keine Zeilen in einer Box)
+- Buchungsliste: jede Buchung ist eine eigene **weiße** Glass-Karte (keine Zeilen in einer Box), mit `--lift` + farbigem Glow, und der Emoji-Kreis ist in der Kartenfarbe getönt (nicht grau)
 - ✦ Sparkle ist das Signatur-Ornament — Wordmark, Primär-Buttons, Karten, Toasts, Empty-States
 - "Heute"-Tag in der Wochenansicht: glossy minze-Bubble, `--on-grad`-Ink + Suffix " — heute" am Tagesnamen (CSS ::after)
 - Motion: bouncy Hover-Lift/Scale (`--ease-bounce`), Press = `scale(0.97)`; Entrances animieren **nur transform** (Basis `opacity:1`), gegated mit `prefers-reduced-motion: no-preference`
@@ -196,9 +198,12 @@ In `getMonthExpenses` wird der Tag der Projektion via `Math.min(origTag, letzter
 
 ### Quick-Tags (10 feste Buttons mit Default-Farben)
 Jeder Tag hat eine fest zugeordnete `data-color` als Vorschlag. Die Buttons sind
-in ihrer Default-Farbe GETÖNT (CSS `[data-color=...]` setzt `--qt`, Hintergrund
-via `color-mix`; Dark Mode kräftiger); im aktiven Zustand glossy Akzent-Gradient
-mit `--on-grad`-Ink — so sieht man vor dem Speichern, wie der Termin aussehen wird:
+**Soft-Glass-Pillen** (siehe Glass-Bubble-Rezept): `[data-color=...]` setzt `--qt`
+(Akzent) + `--qt-tint`, Fill = Tint + weißer Top-Highlight, glossy `box-shadow`
+(weißer Inner-Top, getönter Inner-Bottom + Ring, weicher Glow) und Glanz-Kappe
+(`::before`). Aktiv = volle glossy Bubble (`--qt-grad` + `--qt-on`-Ink) — so sieht
+man vor dem Speichern, wie der Termin aussehen wird. **Nicht** zu flachen Pillen
+zurückbauen:
 
 | Tag | Default-Farbe |
 |---|---|
@@ -298,9 +303,9 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Overrides (optional, nur wenn einzelne Instanzen geändert wurden)
 
 ### Termin-Chip Layout
-- Hintergrund getönt via `color-mix(in srgb, var(--evt-color) 18%, var(--surface))` (Dark: 30% mit `--surface-2`) — bleibt in beiden Themes farbig. `--evt-color` wird in JS gesetzt
-- Border in derselben gemischten Farbe; linke Border (4px) in der vollen Termin-Farbe
-- Hover: `translateX(3px) scale(1.02)` (bouncy)
+- **Soft-Glass-Bubble** (gleiches Rezept wie Quick-Tags), getönt in der Termin-Farbe: Fill = `--evt-tint` + weißer Top-Highlight, Glanz-Kappe (`::before`), glossy `box-shadow` mit weichem farbigem Glow (`color-mix` mit `--evt-color`); abgerundet (`--radius-md`). `--evt-color` + `--evt-tint` werden in JS gesetzt. **KEIN** harter linker Akzent-Balken mehr (alt) — der Chip ist eine Bubble.
+- Dark Mode: Fill = `color-mix(--evt-color 30%, --surface-2)` + Moonlight-Gloss
+- Hover: `translateY(-2px) scale(1.03)` (bouncy Lift)
 - Optional Uhrzeit (klein)
 - Beschreibung — **MUSS** umbrechen können (`white-space: normal`, `overflow-wrap: anywhere`) — KEIN `text-overflow: ellipsis` mit `nowrap` (kappt sonst lange Texte ab)
 - Optional Recurrence-Label
@@ -482,5 +487,6 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ✅ Pill-Tabs, Favicon (candy), theme-color synchron zum Theme (`#FFF2FB`/`#1A1030`), prefers-reduced-motion
 ✅ Abo-Projektion klemmt Tag auf Monatsende (kein "31. Februar" mehr)
 ✅ Auto-Update beim Öffnen (löst das iOS-Home-Screen-Cache-Problem; Toast "App aktualisiert ✓")
-✅ Glass-Bubble-System: farbige Bubbles (Karten/Buttons/Stats/aktiver Tab) + weiße Bubbles (Inputs/Buchungen/Tageszellen), color-mix-getönte Termin-Chips & Quick-Tags, Pastell-Radial-Wash-Hintergrund
+✅ Glass-Bubble-System durchgängig: farbige Bubbles (Karten/Buttons/Stats/aktiver Tab) + weiße Bubbles (Inputs/Buchungen/Tageszellen) + Soft-Glass-Pillen (Quick-Tags & Termin-Chips, glossy statt flach), Pastell-Radial-Wash-Hintergrund
+✅ Weiche, tiefe Schatten (`--lift`/`--lift-hover`) auf neutralen Kästen + Eingabefeldern — plastisch schwebend, nicht "draufgeklatscht"; Buchungs-Emoji-Kreis in Kartenfarbe getönt
 ✅ Home-Screen-Icon `apple-touch-icon.png` (Mini-Kalender mit bunten Termin-Punkten — candy-Refresh ist ein guter nächster Schritt)
