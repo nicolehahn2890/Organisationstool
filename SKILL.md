@@ -51,6 +51,7 @@ description: >
   - **Weiße/neutrale Bubble:** Fill = `linear-gradient(180deg, var(--surface), var(--surface-2))`, 1–2px `--line`, innerer Glass-Ring
   - Alle Gloss-Werte über `--glass-cap / --glass-hi / --glass-ring` → dimmen im Dark Mode automatisch zu bläulichem "Moonlight"
 - Wordmark **`✦tracker`**: das ✦ mit `--holo` gefüllt (background-clip:text), das Wort "tracker" solide in `--text` (NICHT holo — war unleserlich), lowercase
+- **Buttons (exakt nach `references/glass-look-reference.html`):** ALLE Buttons sind Glass-Pills mit Glanz-Kappe (`.btn::before`). **Primary** (`.btn-primary`) = `--zone-grad`-Fill (Fallback `--holo`), `--on-grad`-Ink, Holo-Lichtbrechung (`::after`), farbiger Glow `color-mix(--zone 65%)` + Oberkanten-Highlight `inset 0 2px 0`, weight 700, Padding 17px 34px, ✦-Sparkle voran. **Ghost** (`.btn-ghost`) = neutrale weiße Glass-Pill (`--surface-2` + Gloss), NICHT transparent. **Danger** (`.btn-danger`) = danger-getönte Glass-Pill, `--danger-strong`-Text. NICHT auf flachen Text reduzieren.
 - Tabs = Pill-Container (weiße Bubble); aktiver Tab = farbige Bubble (Ausgaben=peach-grad, Termine=minze-grad)
 - Stat-Reihe ("Überblick") ist ein Candy-Rainbow aus farbigen Bubbles: Ausgegeben=lilac, Abbuchung gesamt=butter (+✦), Mein Anteil=mint, vs.Vormonat=sky, Buchungen=pink
 - Buchungsliste: jede Buchung ist eine eigene **weiße** Glass-Karte (keine Zeilen in einer Box)

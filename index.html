@@ -27,9 +27,10 @@
   --violet-d:     #8FDBFF;
 
   /* Trend / status (theme-independent) */
-  --trend-up:   #FF5FA0;
-  --trend-down: #2FD39E;
-  --danger:     #FF5C8A;
+  --trend-up:      #FF5FA0;
+  --trend-down:    #2FD39E;
+  --danger:        #FF5C8A;
+  --danger-strong: #E23A6E;
 
   /* Type */
   --font-display: 'Baloo 2', 'Quicksand', system-ui, sans-serif;
@@ -561,39 +562,51 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 }
 .recurring-toggle input { width: auto; padding: 0; border: none; background: none; box-shadow: none; accent-color: var(--zone, var(--rosa)); cursor: pointer; }
 
+/* Buttons — Glass-Bubble-Rezept exakt nach glass-look-reference.html.
+   ALLE Buttons sind Glass-Pills (Glanz-Kappe via ::before); Primary trägt
+   zusätzlich die Holo-Lichtbrechung (::after). */
 .btn {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 13px 26px;
-  border-radius: var(--radius-pill);
-  letter-spacing: 0.01em;
-  transition: transform 0.2s var(--ease-bounce), filter 0.2s ease, color 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.btn:active { transform: scale(0.97); }
-.btn .sparkle { opacity: 0.85; }
-.btn-primary {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  color: var(--on-grad, #fff);
-  text-shadow: 0 1px 0 var(--on-grad-sh, rgba(255,255,255,0.4));
-  background:
-    radial-gradient(120% 95% at 50% -16%, var(--glass-cap), rgba(255,255,255,0.1) 44%, rgba(255,255,255,0) 60%),
-    var(--zone-grad, var(--peach-grad));
-  box-shadow: var(--zone-glow, var(--glow-peach)), inset 0 4px 4px var(--glass-hi), inset 0 -9px 14px var(--inner-bottom), inset 0 0 0 1px var(--glass-ring);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 15px 30px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.01em;
+  transition: transform 0.15s var(--ease-bounce), box-shadow 0.22s ease, filter 0.22s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
-.btn-primary::before {
+.btn::before {
   content: '';
   position: absolute;
   z-index: -1;
-  top: 2px; left: 9%; right: 9%;
-  height: 48%;
-  border-radius: inherit;
-  background: linear-gradient(180deg, var(--glass-cap), rgba(255,255,255,0.15) 70%, rgba(255,255,255,0));
+  top: 3px; left: 9%; right: 9%;
+  height: 50%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.15) 70%, rgba(255,255,255,0));
+  pointer-events: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn .sparkle { filter: drop-shadow(0 1px 0 var(--on-grad-sh, rgba(255,255,255,0.4))); }
+
+.btn-primary {
+  padding: 17px 34px;
+  color: var(--on-grad, #3A2150);
+  text-shadow: 0 1px 0 var(--on-grad-sh, rgba(255,255,255,0.45));
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgba(255,255,255,0.95), rgba(255,255,255,0.1) 42%, rgba(255,255,255,0) 58%),
+    var(--zone-grad, var(--holo));
+  box-shadow:
+    0 16px 30px -8px color-mix(in srgb, var(--zone, #B488FF) 65%, transparent),
+    inset 0 4px 4px rgba(255,255,255,1),
+    inset 0 -14px 22px rgba(74,45,99,0.34),
+    inset 0 2px 0 rgba(255,255,255,0.9),
+    inset 0 0 0 1px rgba(255,255,255,0.55);
 }
 .btn-primary::after {
   content: '';
@@ -601,25 +614,40 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   z-index: -1;
   inset: 0;
   border-radius: inherit;
+  pointer-events: none;
   background: var(--holo);
-  opacity: 0.6;
+  opacity: 0.7;
   mix-blend-mode: screen;
-  -webkit-mask: radial-gradient(160% 130% at 50% -50%, transparent 42%, #000 82%);
-          mask: radial-gradient(160% 130% at 50% -50%, transparent 42%, #000 82%);
+  -webkit-mask: radial-gradient(160% 115% at 50% -38%, transparent 46%, #000 82%);
+          mask: radial-gradient(160% 115% at 50% -38%, transparent 46%, #000 82%);
 }
-.btn-primary:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.05) saturate(1.1); }
+.btn-primary:hover { transform: translateY(-3px) scale(1.045); filter: brightness(1.06) saturate(1.12); }
+
 .btn-ghost {
-  background: transparent;
   color: var(--text-2);
-  padding: 13px 18px;
+  background:
+    radial-gradient(135% 100% at 50% -16%, rgba(255,255,255,0.85), rgba(255,255,255,0) 56%),
+    var(--surface-2);
+  box-shadow:
+    0 6px 14px -8px rgba(74,45,99,0.3),
+    inset 0 2px 2px rgba(255,255,255,0.85),
+    inset 0 -5px 9px rgba(74,45,99,0.12),
+    inset 0 0 0 1px var(--line);
 }
-.btn-ghost:hover { color: var(--text); }
+.btn-ghost:hover { color: var(--text); transform: translateY(-2px) scale(1.03); }
+
 .btn-danger {
-  background: transparent;
-  color: var(--danger);
-  padding: 13px 18px;
+  color: var(--danger-strong);
+  background:
+    radial-gradient(135% 100% at 50% -16%, rgba(255,255,255,0.85), rgba(255,255,255,0) 56%),
+    color-mix(in srgb, var(--danger) 18%, var(--surface));
+  box-shadow:
+    0 8px 16px -8px color-mix(in srgb, var(--danger) 40%, transparent),
+    inset 0 2px 2px rgba(255,255,255,0.85),
+    inset 0 -5px 9px color-mix(in srgb, var(--danger) 14%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--danger) 28%, transparent);
 }
-.btn-danger:hover { filter: brightness(0.9); }
+.btn-danger:hover { transform: translateY(-2px) scale(1.03); filter: brightness(1.03); }
 
 .stats-row {
   display: grid;
@@ -648,13 +676,6 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   border-radius: inherit;
   background: linear-gradient(180deg, var(--glass-cap), rgba(255,255,255,0));
 }
-.stat-sparkle {
-  position: absolute;
-  top: 14px; right: 16px;
-  font-size: 15px;
-  color: var(--on-grad);
-  opacity: 0.65;
-}
 .stat-label {
   font-size: 11px;
   color: var(--on-grad);
@@ -663,7 +684,12 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   letter-spacing: 0.1em;
   margin-bottom: 8px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
+/* ✦ sitzt inline am Label-Ende — überlappt nie den Text */
+.stat-spark { flex-shrink: 0; opacity: 0.85; }
 .stat-value {
   font-family: var(--font-display);
   font-size: 28px;
@@ -2006,8 +2032,7 @@ function renderStats() {
       <div class="stat-value">${formatEUR(expenseTotal)}</div>
     </div>
     <div class="stat stat-hero zone-buttermilk">
-      <span class="stat-sparkle">✦</span>
-      <div class="stat-label">Abbuchung gesamt</div>
+      <div class="stat-label">Abbuchung gesamt <span class="stat-spark">✦</span></div>
       <div class="stat-value">${formatEUR(bookingTotal)}</div>
     </div>
     <div class="stat zone-minze">
