@@ -1348,7 +1348,18 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   .cards-row { grid-template-columns: 1fr; }
   .stat { padding: 16px 18px; }
   .stat-value { font-size: 24px; }
-  .qt { padding: 10px 16px; }
+  /* Quick-Tags auf Handy kompakter + Glow zurücknehmen, damit die rechte
+     Spalte mit klarem Rand hineinpasst und nicht seitlich abgeschnitten wird */
+  .quick-tags { gap: 8px; }
+  .qt {
+    padding: 8px 13px;
+    font-size: 12px;
+    box-shadow:
+      0 5px 11px -6px color-mix(in srgb, var(--qt) 40%, transparent),
+      inset 0 2px 2px rgba(255,255,255,0.9),
+      inset 0 -5px 8px color-mix(in srgb, var(--qt) 16%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--qt) 24%, transparent);
+  }
 }
 @media (min-width: 881px) and (max-width: 1100px) {
   .stat { padding: 16px 16px; }

@@ -392,6 +392,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 - **Eingabefelder MÜSSEN `font-size: 16px` haben** (`input, select, textarea`). Bei < 16px zoomt iOS Safari beim Fokussieren automatisch rein und bleibt reingezoomt → Nutzer muss „erst kleiner ziehen". Nie unter 16px setzen. Zusätzlich `-webkit-text-size-adjust: 100%` auf `html`. Viewport-Meta bleibt `width=device-width, initial-scale=1.0` (KEIN `maximum-scale`/`user-scalable=no` — schlecht für A11y).
 - `@media (hover: none)`: Lösch-X (`.exp-del`) ist IMMER sichtbar (Hover existiert auf Touch nicht), größere Tippflächen für Monats-Pfeile, Tag-Plus und Farb-Punkte.
 - Mobile (≤880px): letzter Tag der Woche (`.day-grid .day:last-child`) spannt 2 Spalten — sonst "Loch" neben Sonntag (gleiche Logik wie bei den Stat-Boxen).
+- Mobile: Quick-Tags (`.qt`) werden kompakter (kleineres Padding/Font, gap 8px, zurückgenommener Glow). Grund: iOS rendert die Baloo-2-Schrift breiter als Desktop-Chrome — sonst stößt die rechte Tag-Spalte an den Bildschirmrand und Button/Glow werden seitlich abgeschnitten. Bei Größen-Änderungen mit echter iPhone-Breite gegenprüfen (Puffer bis ~360px Inhaltsbreite einplanen).
 - `.tabs` ist ein Pill-Container (weiße Glass-Bubble, `display: inline-flex`) — NICHT mehr sticky. Aktiver Tab = farbige Bubble.
 - `prefers-reduced-motion: reduce` wird respektiert (Animationen/Transitions quasi aus); Entrances animieren ohnehin nur `transform` (Inhalt bleibt sichtbar, falls Animation nicht läuft).
 
