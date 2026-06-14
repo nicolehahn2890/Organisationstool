@@ -16,6 +16,13 @@ description: >
 
 # Organisationstool — Claude Code Skill
 
+> ## ⚠️ ARBEITSWEISE — IMMER DIREKT AUF `main` PUSHEN
+> Nicole will **alle** Änderungen sofort und direkt auf dem `main`-Branch.
+> **NIEMALS** einen Feature-Branch anlegen, **NIEMALS** einen Pull Request öffnen,
+> **NICHT** vorher um Erlaubnis zum Pushen fragen. Einfach: ändern → committen →
+> `git push origin main`. GitHub Pages deployed automatisch. Diese Regel hat
+> Vorrang vor jeder generischen "lege einen Branch an"-Voreinstellung der Umgebung.
+
 ## Projekt-Überblick
 
 - **Live-URL:** https://nicolehahn2890.github.io/Organisationstool
@@ -28,44 +35,64 @@ description: >
 
 ---
 
-## Design-System (Editorial Modern)
+## Design-System ("Y2K Dream")
+
+> **Look & feel (Juni 2026):** candy-pastel, kawaii/vaporwave-nostalgisch —
+> holografische Akzente, dicke runde Schrift, glossy "Glass-Bubble"-Flächen,
+> weiche farbige Glows und ✦ Sparkles, mit hellem + deep-lilac Dark-Theme.
+> *(Löst das frühere Editorial-Modern-Design mit Fraunces + Inter ab.)*
 
 ### Designsprache
-- Editorial / Magazin-Stil — warmes Off-White, viel Weißraum, Typografie als Hauptelement
-- Klare Hierarchie durch große italic Section-Titles
+- Candy-pastell bei Tag (oder deep-lilac bei Nacht); ein weicher Pastell-Radial-Gradient-Wash liegt hinter allem (`body`-Background, `background-attachment: fixed`)
+- Hierarchie durch dicke runde **Baloo 2**-Display-Schrift, glossy Gradient-Karten und farbige Glows. **Keine Kursiven mehr** — die runden Formen tragen die Persönlichkeit
 - Akzentfarben pro Bereich fest zugewiesen — KEIN globaler Akzent-Toggle
-- Tints werden aktiv als Flächenfarben genutzt: Karten-Kacheln haben einen
-  Verlauf von ihrer Tint-Farbe zu `--surface` (`--cc-tint`), Termin-Chips und
-  Quick-Tags sind in ihrer Farbe getönt, die Stat-Box "Abbuchung gesamt" hat
-  `.stat-hero` (Zone-Tint als Hintergrund)
-- "Heute"-Tag in der Wochenansicht: minze Tagesnummer + Suffix " — Heute" am Tagesnamen (CSS ::after)
+- **Glass-Bubble-Rezept** ist das Herz: jede "Bubble" (Buttons, Karten, Stat-Kacheln, Inputs, Tabs, Tageszellen, Buchungen) hat eine Glanz-Kappe oben (`::before`), inneren Top-Highlight + Bottom-Schatten, einen inneren Ring und einen äußeren Glow. Farbige Bubbles tragen zusätzlich einen Holo-Schimmer (`::after` mit `--holo`, `mix-blend-mode: screen`, radial maskiert)
+  - **Farbige Bubble:** Fill = `--zone-grad`, Ink = `--on-grad` (+ `text-shadow: 0 1px 0 var(--on-grad-sh)`)
+  - **Weiße/neutrale Bubble:** Fill = `linear-gradient(180deg, var(--surface), var(--surface-2))`, 1–2px `--line`, innerer Glass-Ring
+  - Alle Gloss-Werte über `--glass-cap / --glass-hi / --glass-ring` → dimmen im Dark Mode automatisch zu bläulichem "Moonlight"
+- Wordmark **`✦tracker`**: das ✦ mit `--holo` gefüllt (background-clip:text), das Wort "tracker" solide in `--text` (NICHT holo — war unleserlich), lowercase
+- Tabs = Pill-Container (weiße Bubble); aktiver Tab = farbige Bubble (Ausgaben=peach-grad, Termine=minze-grad)
+- Stat-Reihe ("Überblick") ist ein Candy-Rainbow aus farbigen Bubbles: Ausgegeben=lilac, Abbuchung gesamt=butter (+✦), Mein Anteil=mint, vs.Vormonat=sky, Buchungen=pink
+- Buchungsliste: jede Buchung ist eine eigene **weiße** Glass-Karte (keine Zeilen in einer Box)
+- ✦ Sparkle ist das Signatur-Ornament — Wordmark, Primär-Buttons, Karten, Toasts, Empty-States
+- "Heute"-Tag in der Wochenansicht: glossy minze-Bubble, `--on-grad`-Ink + Suffix " — heute" am Tagesnamen (CSS ::after)
+- Motion: bouncy Hover-Lift/Scale (`--ease-bounce`), Press = `scale(0.97)`; Entrances animieren **nur transform** (Basis `opacity:1`), gegated mit `prefers-reduced-motion: no-preference`
 
 ### Schriften (Google Fonts CDN)
-- **Fraunces** (Italic-Serife) — nur für Headlines, Beträge, Tagesnummern
-- **Inter** — Body-Text, alles andere
+- **Baloo 2** (rund, dick, bubbly) — Headlines, Beträge, Tagesnummern, Wordmark, Buttons (`--font-display`)
+- **Quicksand** (weich, geometrisch) — Body, Labels, alle UI (`--font-body`)
+- Field-Labels sind UPPERCASE, 11px, `letter-spacing: 0.12em`, weight 700
 
-### Farbpalette (5 Akzente)
+### Farbpalette (5 Candy-Akzente)
 ```
-peach       — #E89878 (light) / #F0AE92 (dark)   → AMEX-Bereich, Karten-Section
-rosa        — #E29BB5 / #E5A8BC                   → "Neue Ausgabe"-Section, Visa-Karte
-minze       — #7CC4A7 / #9DD4BC                   → Termine-Bereich, Girokonto, "Heute"
-buttermilk  — #D9B85A / #E5C77A                   → Statistik / Überblick
-violet      — #A98AC9 / #BFA5DA                   → Buchungsliste, Abo-Tags
+peach (bubblegum) — #FF7FC4 (light) / #FF9AD6 (dark)   → AMEX-Bereich, Karten-Section
+rosa  (lilac)     — #B488FF / #C4A2FF                   → "Neue Ausgabe"-Section, Visa-Karte
+minze (mint)      — #6FE9C0 / #7FF0CE                   → Termine-Bereich, Girokonto, "Heute"
+buttermilk(butter)— #FFD15C / #FFDD7A                   → Statistik / Überblick
+violet (sky)      — #6FD2FF / #8FDBFF                   → Buchungsliste, Abo-Tags
 ```
+- Jeder Akzent hat zusätzlich: `--*-tint`, `--*-grad` (glossy Verlauf) und `--glow-*` (farbiger Glow).
+- **`--holo`** (pink→lilac→sky→mint→butter) ist die Signatur: Wordmark, Primär-Buttons, aktiver Tab, Toast-Rand, Empty-✦.
+- Neutrals sind pink-getönt, nicht grau. Ink ist **deep-grape `#4A2D63`**, niemals Schwarz.
+- Status-Farben (theme-unabhängig): trend-up/over = `#FF5FA0`, trend-down/under = `#2FD39E`, danger = `#FF5C8A`.
 
 ### Bereich-zu-Farbe-Zuordnung (FEST, nicht ändern)
-| Bereich | Farbe | CSS-Klasse |
-|---|---|---|
-| Karten-Übersicht | peach | `zone-peach` |
-| Neue Ausgabe (Form) | rosa | `zone-rosa` |
-| Überblick / Stats | buttermilk | `zone-buttermilk` |
-| Buchungsliste | violet | `zone-violet` |
-| Termine (kompletter Tab) | minze | `zone-minze` |
+| Bereich | Farbe | CSS-Klasse | Ink auf Fill (`--on-grad`) |
+|---|---|---|---|
+| Karten-Übersicht | peach | `zone-peach` | `#8E1556` |
+| Neue Ausgabe (Form) | rosa | `zone-rosa` | `#4C2299` |
+| Überblick / Stats | buttermilk | `zone-buttermilk` | `#8A5E00` |
+| Buchungsliste | violet | `zone-violet` | `#115F86` |
+| Termine (kompletter Tab) | minze | `zone-minze` | `#0A7A58` |
+
+Die Stat-Kacheln bekommen ihre Zone-Klasse zur Laufzeit in `renderStats()` gesetzt (Candy-Rainbow), die Karten in `renderCards()` (`zone-${card.color}`).
 
 ### Theme: Light / Dark Mode
-- **Light:** Off-White Hintergrund `#F6F2EC`, warme Brauntöne
-- **Dark:** Anthrazit `#1A1816` (NICHT pures Schwarz!), Surfaces deutlich abgesetzt `#252220`
+- **Light:** candy-pastel Hintergrund `#FFF2FB`, Surface `#FFFFFF`, deep-grape Ink `#4A2D63`
+- **Dark:** deep-lilac Nacht `#1A1030` (NICHT pures Schwarz!), Surface deutlich abgesetzt `#271A45`, Ink `#F3E9FF`
 - Theme-Attribut wird auf `<html>` UND `<body>` gesetzt — beide Selektoren werden gebraucht
+- `:root` enthält nur Akzent-Basiswerte + theme-unabhängige Tokens (Fonts, Radii, Motion, Trend) — die theme-abhängigen Tokens stehen ausschließlich in den `[data-theme]`-Blöcken (kein `:root`-Light-Fallback, sonst gewinnt Light gegen Dark)
+- Native Date/Time-Picker-Icons im Dark Mode: `filter: invert(1) brightness(1.9)` auf `::-webkit-calendar-picker-indicator`
 - Toggle-Button rechts oben, Icon ist SVG (Mond/Sonne)
 
 ---
@@ -100,7 +127,7 @@ Funktion: `computeBookingDate(cardId, expenseDateISO)`
 ### Karten-Kacheln zeigen
 - **Hauptzahl:** Was im angezeigten Monat **abgebucht** wird (nach Buchungsdatum gefiltert)
 - **Label:** "ABBUCHUNG [Monat] [Jahr]"
-- **Pending-Hinweis (italic):** "+ X € folgt im nächsten Monat" — wenn es Käufe aus diesem Monat gibt deren Buchungsdatum in einem späteren Monat liegt
+- **Pending-Hinweis:** "+ X € folgt im nächsten Monat" — wenn es Käufe aus diesem Monat gibt deren Buchungsdatum in einem späteren Monat liegt (in `--on-grad`-Ink auf der Karte)
 
 ### Kategorien (12 Stück, mit Emojis)
 ```
@@ -126,7 +153,7 @@ Grund: Bei Amex (Käufe ab dem 22.) und Visa (+30 Tage) liegt das Buchungsdatum 
 - Gespeichert als `expense.eigenAmount: number | null`
 - **Hat NULL Einfluss** auf Karten-Summen, Buchungen, Abbuchungen — reine Info-Spalte
 - Wird in Summe als 3. Stat-Box "Mein Anteil" angezeigt
-- In der Liste pro Eintrag dezent als italic Hinweis: "davon mein: X €" in minze-Farbe (`.eigen-hint`)
+- In der Liste pro Eintrag dezent als Hinweis: "davon mein: X €" in minze-Farbe, weight 700 (`.eigen-hint`)
 - Leeres Feld = `null` → kein Hinweis, zählt nicht zur Summe
 
 ### Statistik-Box (5 Stats)
@@ -147,9 +174,10 @@ Letzte Box bekommt im Mobile-Layout volle Breite — kein "Loch" mehr. Bei Erwei
 ### Buchungsliste
 - Sortiert nach Ausgabedatum (neueste zuerst)
 - Pro Eintrag: Emoji, Beschreibung, Karte (mit Farb-Pill), Kategorie, Datum
-- Bei Amex/Visa: italic "→ abgebucht TT.MM." als Zusatzhinweis
-- Bei eigenAmount > 0: italic "davon mein: X €" in minze
-- Hover zeigt Lösch-X
+- Bei Amex/Visa: "→ abgebucht TT.MM." als Zusatzhinweis (weight 600)
+- Bei eigenAmount > 0: "davon mein: X €" in minze (weight 700)
+- Jede Buchung ist eine eigene weiße Glass-Karte; Hover lupft sie leicht
+- Hover zeigt Lösch-X; Karten-Farb-Pill (`.cc-pill`) hat einen glühenden Punkt
 - **Beschreibung MUSS umbrechen können** — `.exp-desc` darf NICHT `white-space: nowrap` + `text-overflow: ellipsis` haben (kappt sonst lange Texte). Stattdessen: `word-break: break-word; overflow-wrap: anywhere; flex-wrap: wrap`
 
 ### Monatsnavigation
@@ -167,9 +195,9 @@ In `getMonthExpenses` wird der Tag der Projektion via `Math.min(origTag, letzter
 
 ### Quick-Tags (10 feste Buttons mit Default-Farben)
 Jeder Tag hat eine fest zugeordnete `data-color` als Vorschlag. Die Buttons sind
-in ihrer Default-Farbe GETÖNT (CSS `[data-color=...]` → `--*-tint`); im aktiven
-Zustand volle Akzentfarbe — so sieht man vor dem Speichern, wie der Termin
-aussehen wird:
+in ihrer Default-Farbe GETÖNT (CSS `[data-color=...]` setzt `--qt`, Hintergrund
+via `color-mix`; Dark Mode kräftiger); im aktiven Zustand glossy Akzent-Gradient
+mit `--on-grad`-Ink — so sieht man vor dem Speichern, wie der Termin aussehen wird:
 
 | Tag | Default-Farbe |
 |---|---|
@@ -269,8 +297,9 @@ Heute-Markierung: Tag wird mit minze-tint Hintergrund + minze Border hervorgehob
 - Overrides (optional, nur wenn einzelne Instanzen geändert wurden)
 
 ### Termin-Chip Layout
-- Hintergrund in der TINT-Version der Termin-Farbe (`--evt-tint`, via `COLOR_TINT_VAR` in JS gesetzt) + 1px `--line`-Border (Abgrenzung auch im Heute-Feld)
-- Linke Border (3px) in der vollen Termin-Farbe
+- Hintergrund getönt via `color-mix(in srgb, var(--evt-color) 18%, var(--surface))` (Dark: 30% mit `--surface-2`) — bleibt in beiden Themes farbig. `--evt-color` wird in JS gesetzt
+- Border in derselben gemischten Farbe; linke Border (4px) in der vollen Termin-Farbe
+- Hover: `translateX(3px) scale(1.02)` (bouncy)
 - Optional Uhrzeit (klein)
 - Beschreibung — **MUSS** umbrechen können (`white-space: normal`, `overflow-wrap: anywhere`) — KEIN `text-overflow: ellipsis` mit `nowrap` (kappt sonst lange Texte ab)
 - Optional Recurrence-Label
@@ -356,8 +385,8 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ### Touch / Mobile
 - `@media (hover: none)`: Lösch-X (`.exp-del`) ist IMMER sichtbar (Hover existiert auf Touch nicht), größere Tippflächen für Monats-Pfeile, Tag-Plus und Farb-Punkte.
 - Mobile (≤880px): letzter Tag der Woche (`.day-grid .day:last-child`) spannt 2 Spalten — sonst "Loch" neben Sonntag (gleiche Logik wie bei den Stat-Boxen).
-- `.tabs` ist `position: sticky` (top: 0, bg: var(--bg)) — Tabs bleiben beim Scrollen oben.
-- `prefers-reduced-motion: reduce` wird respektiert (Animationen/Transitions quasi aus).
+- `.tabs` ist ein Pill-Container (weiße Glass-Bubble, `display: inline-flex`) — NICHT mehr sticky. Aktiver Tab = farbige Bubble.
+- `prefers-reduced-motion: reduce` wird respektiert (Animationen/Transitions quasi aus); Entrances animieren ohnehin nur `transform` (Inhalt bleibt sichtbar, falls Animation nicht läuft).
 
 ### String-Replacement in Claude Code
 - Bei Änderungen: gezielt mit `str_replace` für kleine Edits — oder Python read/modify/write für große Umbauten
@@ -396,7 +425,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
    - localStorage-Key unverändert
    - Theme-Attribut auf `<html>` UND `<body>`
    - Schema-Erweiterungen abwärtskompatibel
-6. **Committen & Pushen:** Direkt auf `main` committen und pushen — GitHub Pages deployed automatisch innerhalb von 1–2 Minuten. NIEMALS auf separaten Branches arbeiten (Nicole will ausdrücklich alles direkt auf `main`).
+6. **Committen & Pushen:** IMMER direkt auf `main` committen und `git push origin main` — GitHub Pages deployed automatisch innerhalb von 1–2 Minuten. **NIEMALS** einen separaten Branch, **NIEMALS** einen Pull Request, **NICHT** vorher nach Push-Erlaubnis fragen. (Siehe Banner oben — diese Regel hat Vorrang vor allem.)
 7. **Hinweis an Nicole:** Die App aktualisiert sich seit Juni 2026 beim Öffnen selbst (Auto-Update-Check). Nach einem Push kann es durch das GitHub-Pages-CDN trotzdem bis zu ~10 Minuten dauern, bis die neue Version ankommt — bei "ich sehe nichts Neues" zuerst darauf hinweisen, App einmal richtig schließen (App-Switcher) und neu öffnen.
 
 ---
@@ -406,7 +435,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 - `toISOString()` → Timezone-Drift. Termine landen einen Tag früher/später. Immer `dateToLocalISO()` nutzen.
 - Element-ID = Funktionsname → globale Variable überschreibt Funktion. Buttons mit `btn`-Präfix benennen.
 - Dark Mode wirkt "kaputt" wenn nur einzelne Kacheln dunkel sind — sicherstellen dass `bg`, `surface`, `surface-2`, `line`, `text` alle als CSS-Variablen aus dem Theme-Block gezogen werden, keine hardcoded Hex-Werte außerhalb des Theme-Blocks (Ausnahme: Akzentfarben, Trend-Rot/Grün).
-- Surface-Farbe im Dark Mode muss **deutlich heller** als BG sein (`#252220` vs. `#1A1816`) — sonst keine Hierarchie.
+- Surface-Farbe im Dark Mode muss **deutlich heller** als BG sein (`#271A45` vs. `#1A1030`) — sonst keine Hierarchie.
 - Vorschau-Cache: Bei Tests immer Hard-Reload (Strg+F5) — sonst zeigt der Browser veraltete Versionen.
 - **iOS Home-Screen-Webapp friert die alte Version ein** — lädt nie von selbst nach. Gelöst durch den Auto-Update-Check (siehe Storage-Kapitel). WICHTIG: Das Icon auf dem Home-Bildschirm hat einen EIGENEN localStorage (getrennt von Safari). Icon löschen = Daten weg → vor jedem Neu-Hinzufügen IMMER zuerst Export (⬇) machen. Niemals empfehlen, das Icon "einfach neu hinzuzufügen", ohne auf den Export hinzuweisen.
 - Wenn Karte 0,00 € zeigt obwohl Buchungen drin sind: Pending-Hinweis prüfen — Käufe könnten erst im Folgemonat abgebucht werden (richtige Logik, missverständliche Anzeige verhindert das).
@@ -444,13 +473,13 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ✅ Light + Dark Mode (durchgängig, nicht nur Kacheln)
 ✅ localStorage-Persistenz unter `nicole_tracker_v2`
 ✅ JSON-Export/-Import im Header (Backup + Migration zwischen Origins)
-✅ Editorial-Modern Design mit Fraunces + Inter
+✅ **"Y2K Dream"-Design** (Juni 2026): Baloo 2 + Quicksand, Candy-Pastell-Palette, Holo-Akzente, glossy Glass-Bubbles, ✦ Sparkles, deep-lilac Dark Mode
 ✅ "Heute"-Button in der Monatsnavigation (nur sichtbar wenn nicht im aktuellen Monat)
-✅ Toast-Bestätigungen + rote Pflichtfeld-Markierung mit Shake
+✅ Toast-Bestätigungen (Holo-Rand) + rote Pflichtfeld-Markierung mit Shake
 ✅ Enter speichert Formulare, Escape schließt das Modal
 ✅ Touch-optimiert: Lösch-X auf Handy immer sichtbar, größere Tippflächen, Sonntag ohne Layout-Loch
-✅ Sticky Tabs, Favicon, theme-color synchron zum Theme, prefers-reduced-motion
+✅ Pill-Tabs, Favicon (candy), theme-color synchron zum Theme (`#FFF2FB`/`#1A1030`), prefers-reduced-motion
 ✅ Abo-Projektion klemmt Tag auf Monatsende (kein "31. Februar" mehr)
 ✅ Auto-Update beim Öffnen (löst das iOS-Home-Screen-Cache-Problem; Toast "App aktualisiert ✓")
-✅ Design-Glow-up: getönte Termin-Chips & Quick-Tags, Karten mit Farbverlauf, `.stat-hero` für "Abbuchung gesamt", "— Heute"-Label
-✅ Home-Screen-Icon `apple-touch-icon.png` (Mini-Kalender mit bunten Termin-Punkten, hell)
+✅ Glass-Bubble-System: farbige Bubbles (Karten/Buttons/Stats/aktiver Tab) + weiße Bubbles (Inputs/Buchungen/Tageszellen), color-mix-getönte Termin-Chips & Quick-Tags, Pastell-Radial-Wash-Hintergrund
+✅ Home-Screen-Icon `apple-touch-icon.png` (Mini-Kalender mit bunten Termin-Punkten — candy-Refresh ist ein guter nächster Schritt)
