@@ -491,6 +491,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 ✅ Toast-Bestätigungen (Holo-Rand) + rote Pflichtfeld-Markierung mit Shake
 ✅ Enter speichert Formulare, Escape schließt das Modal
 ✅ Touch-optimiert: Lösch-X auf Handy immer sichtbar, größere Tippflächen, Sonntag ohne Layout-Loch
+✅ iPhone-Feinschliff: Eingabefelder 16px (kein iOS-Auto-Zoom), native Datum/Uhrzeit-Felder volle Breite + einheitliche Höhe (leeres `time`-Feld fällt nicht mehr zusammen), Quick-Tags auf Handy kompakt
 ✅ Pill-Tabs, Favicon (candy), theme-color synchron zum Theme (`#FFF2FB`/`#1A1030`), prefers-reduced-motion
 ✅ Abo-Projektion klemmt Tag auf Monatsende (kein "31. Februar" mehr)
 ✅ Auto-Update beim Öffnen (löst das iOS-Home-Screen-Cache-Problem; Toast "App aktualisiert ✓")
