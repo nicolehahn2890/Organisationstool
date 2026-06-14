@@ -1348,16 +1348,17 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   .cards-row { grid-template-columns: 1fr; }
   .stat { padding: 16px 18px; }
   .stat-value { font-size: 24px; }
-  /* Quick-Tags auf Handy kompakter + Glow zurücknehmen, damit die rechte
-     Spalte mit klarem Rand hineinpasst und nicht seitlich abgeschnitten wird */
-  .quick-tags { gap: 8px; }
+  /* Quick-Tags auf Handy deutlich kompakter + Glow zurücknehmen, damit die
+     rechte Spalte auch bei breiterer iOS-Schrift / Rest-Zoom Rand behält */
+  .quick-tags { gap: 7px; }
   .qt {
-    padding: 8px 13px;
-    font-size: 12px;
+    padding: 6px 11px;
+    font-size: 11px;
+    font-weight: 600;
     box-shadow:
-      0 5px 11px -6px color-mix(in srgb, var(--qt) 40%, transparent),
+      0 4px 9px -5px color-mix(in srgb, var(--qt) 38%, transparent),
       inset 0 2px 2px rgba(255,255,255,0.9),
-      inset 0 -5px 8px color-mix(in srgb, var(--qt) 16%, transparent),
+      inset 0 -4px 7px color-mix(in srgb, var(--qt) 15%, transparent),
       inset 0 0 0 1px color-mix(in srgb, var(--qt) 24%, transparent);
   }
 }
