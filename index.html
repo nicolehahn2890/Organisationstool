@@ -84,6 +84,9 @@
 
   --shadow-1: 0 12px 26px -8px rgba(180, 100, 200, 0.34);
   --shadow-3: 0 26px 56px -14px rgba(180, 100, 200, 0.45);
+  /* Weicher, tiefer "Lift" — lässt neutrale Kästen plastisch schweben (nicht draufgeklatscht) */
+  --lift:       0 3px 8px -3px rgba(74,45,99,0.12), 0 18px 38px -10px rgba(74,45,99,0.26);
+  --lift-hover: 0 5px 12px -4px rgba(74,45,99,0.16), 0 26px 50px -12px rgba(74,45,99,0.34);
   --glow-peach:      0 20px 42px -10px rgba(255, 127, 196, 0.60);
   --glow-rosa:       0 20px 42px -10px rgba(180, 136, 255, 0.60);
   --glow-minze:      0 20px 42px -10px rgba(111, 233, 192, 0.60);
@@ -131,6 +134,8 @@
 
   --shadow-1: 0 12px 26px -8px rgba(0, 0, 0, 0.55);
   --shadow-3: 0 28px 58px -14px rgba(0, 0, 0, 0.72);
+  --lift:       0 3px 8px -3px rgba(0,0,0,0.45), 0 18px 38px -10px rgba(0,0,0,0.6);
+  --lift-hover: 0 5px 12px -4px rgba(0,0,0,0.5), 0 26px 50px -12px rgba(0,0,0,0.7);
   --glow-peach:      0 20px 44px -10px rgba(255, 154, 214, 0.55);
   --glow-rosa:       0 20px 44px -10px rgba(196, 162, 255, 0.55);
   --glow-minze:      0 20px 44px -10px rgba(127, 240, 206, 0.50);
@@ -768,16 +773,16 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow:
-    0 22px 40px -16px color-mix(in srgb, var(--card-color, var(--rosa)) 30%, transparent),
-    0 8px 16px -6px rgba(74,45,99,0.16),
+    var(--lift),
+    0 16px 34px -14px color-mix(in srgb, var(--card-color, var(--rosa)) 38%, transparent),
     inset 0 5px 5px var(--glass-hi),
     inset 0 0 0 1px var(--glass-ring);
   transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease;
 }
 .exp-item:hover {
   box-shadow:
-    0 26px 48px -16px color-mix(in srgb, var(--card-color, var(--rosa)) 40%, transparent),
-    0 10px 20px -6px rgba(74,45,99,0.18),
+    var(--lift-hover),
+    0 22px 44px -14px color-mix(in srgb, var(--card-color, var(--rosa)) 48%, transparent),
     inset 0 5px 5px var(--glass-hi),
     inset 0 0 0 1px var(--glass-ring);
 }
@@ -1029,10 +1034,10 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   min-height: 132px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 12px 22px -14px var(--inner-bottom), inset 0 3px 4px var(--glass-hi), inset 0 0 0 1px var(--glass-ring);
-  transition: transform 0.2s var(--ease-bounce);
+  box-shadow: var(--lift), inset 0 5px 5px var(--glass-hi), inset 0 0 0 1px var(--glass-ring);
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease;
 }
-.day:hover { transform: translateY(-2px); }
+.day:hover { transform: translateY(-3px); box-shadow: var(--lift-hover), inset 0 5px 5px var(--glass-hi), inset 0 0 0 1px var(--glass-ring); }
 .day.today {
   border-color: transparent;
   color: var(--on-grad, #0A7A58);
