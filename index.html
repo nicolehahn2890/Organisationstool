@@ -159,7 +159,7 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { background: var(--bg); }
+html { background: var(--bg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   background:
     radial-gradient(900px 520px at 12% -5%, var(--rosa-tint), transparent 60%),
@@ -186,7 +186,9 @@ button:focus-visible {
 
 input, select, textarea {
   font-family: var(--font-body);
-  font-size: 15px;
+  /* 16px ist Pflicht: iOS Safari zoomt sonst beim Fokussieren automatisch rein
+     (und bleibt reingezoomt) — Ursache für "muss erst kleiner ziehen". */
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
   width: 100%;

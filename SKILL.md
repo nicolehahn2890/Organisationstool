@@ -389,6 +389,7 @@ Anwendungsfall: Migration zwischen verschiedenen Origins (lokale Datei `file://`
 - Section-IDs heißen bewusst `...Section` — keine Kollision mit Funktionsnamen.
 
 ### Touch / Mobile
+- **Eingabefelder MÜSSEN `font-size: 16px` haben** (`input, select, textarea`). Bei < 16px zoomt iOS Safari beim Fokussieren automatisch rein und bleibt reingezoomt → Nutzer muss „erst kleiner ziehen". Nie unter 16px setzen. Zusätzlich `-webkit-text-size-adjust: 100%` auf `html`. Viewport-Meta bleibt `width=device-width, initial-scale=1.0` (KEIN `maximum-scale`/`user-scalable=no` — schlecht für A11y).
 - `@media (hover: none)`: Lösch-X (`.exp-del`) ist IMMER sichtbar (Hover existiert auf Touch nicht), größere Tippflächen für Monats-Pfeile, Tag-Plus und Farb-Punkte.
 - Mobile (≤880px): letzter Tag der Woche (`.day-grid .day:last-child`) spannt 2 Spalten — sonst "Loch" neben Sonntag (gleiche Logik wie bei den Stat-Boxen).
 - `.tabs` ist ein Pill-Container (weiße Glass-Bubble, `display: inline-flex`) — NICHT mehr sticky. Aktiver Tab = farbige Bubble.
