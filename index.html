@@ -1046,20 +1046,49 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
   gap: 6px;
 }
 .evt {
-  background: color-mix(in srgb, var(--evt-color, var(--minze)) 18%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--evt-color, var(--minze)) 30%, transparent);
-  border-left: 4px solid var(--evt-color, var(--minze));
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 11px;
   font-size: 12px;
   cursor: pointer;
-  transition: transform 0.18s var(--ease-bounce);
+  transition: transform 0.18s var(--ease-bounce), filter 0.18s ease;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  color: var(--text);
+  background:
+    radial-gradient(135% 100% at 50% -16%, rgba(255,255,255,0.85), rgba(255,255,255,0) 56%),
+    var(--evt-tint, var(--minze-tint));
+  box-shadow:
+    0 6px 14px -8px color-mix(in srgb, var(--evt-color, var(--minze)) 45%, transparent),
+    inset 0 2px 2px rgba(255,255,255,0.9),
+    inset 0 -5px 9px color-mix(in srgb, var(--evt-color, var(--minze)) 16%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--evt-color, var(--minze)) 26%, transparent);
 }
-[data-theme="dark"] .evt { background: color-mix(in srgb, var(--evt-color, var(--minze)) 30%, var(--surface-2)); }
-.evt:hover { transform: translateX(3px) scale(1.02); }
+.evt::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 2px; left: 6%; right: 6%;
+  height: 48%;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.12) 70%, rgba(255,255,255,0));
+  pointer-events: none;
+}
+[data-theme="dark"] .evt {
+  background:
+    radial-gradient(135% 100% at 50% -16%, var(--glass-cap), rgba(255,255,255,0) 56%),
+    color-mix(in srgb, var(--evt-color, var(--minze)) 30%, var(--surface-2));
+  box-shadow:
+    0 6px 14px -8px color-mix(in srgb, var(--evt-color, var(--minze)) 45%, transparent),
+    inset 0 2px 2px var(--glass-hi),
+    inset 0 -5px 9px rgba(0,0,0,0.28),
+    inset 0 0 0 1px color-mix(in srgb, var(--evt-color, var(--minze)) 30%, transparent);
+}
+.evt:hover { transform: translateY(-2px) scale(1.03); filter: brightness(1.03) saturate(1.05); }
 .evt-time {
   font-size: 10px;
   color: var(--text-2);
