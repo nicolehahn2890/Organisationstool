@@ -884,33 +884,70 @@ input[type="date"], input[type="time"] { color-scheme: light dark; }
 }
 .qt {
   --qt: var(--minze);
-  padding: 9px 16px;
+  --qt-tint: var(--minze-tint);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 10px 18px;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--qt) 16%, var(--surface));
-  border: 1.5px solid transparent;
+  border: none;
   color: var(--text);
   font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em;
-  transition: transform 0.2s var(--ease-bounce), border-color 0.18s ease, color 0.18s ease;
+  background:
+    radial-gradient(135% 100% at 50% -16%, rgba(255,255,255,0.85), rgba(255,255,255,0) 56%),
+    var(--qt-tint);
+  box-shadow:
+    0 8px 18px -8px color-mix(in srgb, var(--qt) 45%, transparent),
+    inset 0 2px 2px rgba(255,255,255,0.9),
+    inset 0 -6px 10px color-mix(in srgb, var(--qt) 16%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--qt) 24%, transparent);
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease, filter 0.2s ease;
 }
-.qt:hover { transform: translateY(-2px) scale(1.03); border-color: var(--qt); }
-/* Jeder Quick-Tag trägt seine Termin-Farbe */
-.qt[data-color="peach"]      { --qt: var(--peach); }
-.qt[data-color="rosa"]       { --qt: var(--rosa); }
-.qt[data-color="minze"]      { --qt: var(--minze); }
-.qt[data-color="buttermilk"] { --qt: var(--buttermilk); }
-.qt[data-color="violet"]     { --qt: var(--violet); }
-/* Dark mode: kräftiger tönen, sonst zu dunkel */
-[data-theme="dark"] .qt { background: color-mix(in srgb, var(--qt) 28%, var(--surface-2)); }
-/* Aktiv: glossy Termin-Farbe — zeigt direkt, wie der Termin aussehen wird */
+.qt::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 2px; left: 8%; right: 8%;
+  height: 50%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.12) 70%, rgba(255,255,255,0));
+  pointer-events: none;
+}
+.qt:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.03) saturate(1.05); }
+.qt:active { transform: scale(0.97); }
+/* Jeder Quick-Tag trägt seine Termin-Farbe (Akzent + Tint für den Glass-Soft-Look) */
+.qt[data-color="peach"]      { --qt: var(--peach);      --qt-tint: var(--peach-tint); }
+.qt[data-color="rosa"]       { --qt: var(--rosa);       --qt-tint: var(--rosa-tint); }
+.qt[data-color="minze"]      { --qt: var(--minze);      --qt-tint: var(--minze-tint); }
+.qt[data-color="buttermilk"] { --qt: var(--buttermilk); --qt-tint: var(--buttermilk-tint); }
+.qt[data-color="violet"]     { --qt: var(--violet);     --qt-tint: var(--violet-tint); }
+/* Dark mode: Tint wird kräftiger gemischt, damit die Bubble farbig bleibt */
+[data-theme="dark"] .qt {
+  color: var(--text);
+  background:
+    radial-gradient(135% 100% at 50% -16%, var(--glass-cap), rgba(255,255,255,0) 56%),
+    color-mix(in srgb, var(--qt) 30%, var(--surface-2));
+  box-shadow:
+    0 8px 18px -8px color-mix(in srgb, var(--qt) 45%, transparent),
+    inset 0 2px 2px var(--glass-hi),
+    inset 0 -6px 10px rgba(0,0,0,0.28),
+    inset 0 0 0 1px color-mix(in srgb, var(--qt) 30%, transparent);
+}
+/* Aktiv: volle glossy Termin-Farbe — zeigt direkt, wie der Termin aussehen wird */
 .qt.active {
   color: var(--qt-on, #0A7A58);
-  background: var(--qt-grad, var(--minze-grad));
-  border-color: transparent;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-  box-shadow: inset 0 3px 4px var(--glass-hi), inset 0 -6px 10px var(--inner-bottom);
+  background:
+    radial-gradient(135% 100% at 50% -16%, rgba(255,255,255,0.9), rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 60%),
+    var(--qt-grad, var(--minze-grad));
+  text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 22px -8px color-mix(in srgb, var(--qt) 60%, transparent),
+    inset 0 3px 3px rgba(255,255,255,0.95),
+    inset 0 -8px 12px var(--inner-bottom),
+    inset 0 0 0 1px rgba(255,255,255,0.5);
 }
 .qt.active[data-color="peach"]      { --qt-grad: var(--peach-grad);      --qt-on: #8E1556; }
 .qt.active[data-color="rosa"]       { --qt-grad: var(--rosa-grad);       --qt-on: #4C2299; }
