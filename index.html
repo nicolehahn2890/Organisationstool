@@ -192,6 +192,8 @@ input, select, textarea {
   font-weight: 600;
   color: var(--text);
   width: 100%;
+  /* Einheitliche Mindesthöhe: leeres time-Feld fällt auf iOS sonst zusammen */
+  min-height: 50px;
   padding: 12px 14px;
   border: 2px solid var(--line);
   border-radius: var(--radius-md);
@@ -233,7 +235,10 @@ select {
 input[type="date"], input[type="time"] {
   -webkit-appearance: none;
   appearance: none;
-  display: block;
+  /* Flex zentriert den Wert vertikal, damit das (leere) Feld die volle
+     min-height ausfüllt und genauso hoch ist wie die anderen Felder */
+  display: flex;
+  align-items: center;
   width: 100%;
   box-sizing: border-box;
   color-scheme: light dark;
@@ -245,7 +250,7 @@ input[type="time"]::-webkit-date-and-time-value {
 }
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
-  margin-left: 4px;
+  margin-left: auto;
   flex-shrink: 0;
 }
 [data-theme="dark"] input[type="date"], [data-theme="dark"] input[type="time"] { color-scheme: dark; }
